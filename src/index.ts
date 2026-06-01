@@ -4,6 +4,8 @@ export { convert } from './convert.js';
 export type { ConversationOf } from './convert.js';
 export { parseDataUrl, toDataUrl } from './image.js';
 export type { NormalizedImage } from './image.js';
+export { responseFromOpenAI, responseFromAnthropic, responseFromGemini, normalizeResponse } from './response.js';
+export type { NormalizedResponse, FinishReason, Usage } from './response.js';
 
 export type {
   Provider,
