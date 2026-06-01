@@ -1,0 +1,44 @@
+name: Bug report
+description: Report a conversion that produces the wrong output
+labels: ['bug']
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for the report. A minimal reproduction makes a bug fixable.
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Which version of llm-messages?
+      placeholder: 0.1.0
+    validations:
+      required: true
+  - type: dropdown
+    id: direction
+    attributes:
+      label: Conversion
+      description: Which direction is affected?
+      options:
+        - openai -> anthropic
+        - openai -> gemini
+        - anthropic -> openai
+        - gemini -> openai
+        - convert() between two providers
+        - other
+    validations:
+      required: true
+  - type: textarea
+    id: input
+    attributes:
+      label: Input conversation
+      description: The conversation you passed in.
+      render: json
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected vs actual
+      description: What you expected to get, and what you got instead.
+    validations:
+      required: true

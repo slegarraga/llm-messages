@@ -1,0 +1,21 @@
+name: Feature request
+description: Suggest a capability or provider behaviour to support
+labels: ['enhancement']
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      description: Describe the use case, not just the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What should the API or behaviour look like?
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Links to provider documentation that ground the expected behaviour.
