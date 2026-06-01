@@ -18,7 +18,8 @@ export type WarningCode =
   | 'merged-role'
   | 'dropped-content'
   | 'invalid-json-arguments'
-  | 'system-midstream';
+  | 'system-midstream'
+  | 'gemini-url-image';
 
 /** A non fatal event raised during conversion. */
 export interface Warning {
@@ -41,8 +42,14 @@ export interface OpenAITextPart {
   text: string;
 }
 
-/** A content part. Non text parts (images, audio) are preserved verbatim. */
-export type OpenAIContentPart = OpenAITextPart | { type: string; [key: string]: unknown };
+export interface OpenAIImagePart {
+  type: 'image_url';
+  /** `url` is a remote https URL or a `data:<mediaType>;base64,<data>` data URL. */
+  image_url: { url: string; detail?: 'auto' | 'low' | 'high' | 'original' };
+}
+
+/** A content part. Unknown part types (audio, files) are preserved verbatim. */
+export type OpenAIContentPart = OpenAITextPart | OpenAIImagePart | { type: string; [key: string]: unknown };
 
 export interface OpenAIToolCall {
   id: string;
@@ -107,10 +114,16 @@ export interface AnthropicToolResultBlock {
   is_error?: boolean;
 }
 
+export interface AnthropicImageBlock {
+  type: 'image';
+  source: { type: 'base64'; media_type: string; data: string } | { type: 'url'; url: string };
+}
+
 export type AnthropicContentBlock =
   | AnthropicTextBlock
   | AnthropicToolUseBlock
   | AnthropicToolResultBlock
+  | AnthropicImageBlock
   | { type: string; [key: string]: unknown };
 
 export interface AnthropicMessage {
@@ -150,7 +163,21 @@ export interface GeminiFunctionResponsePart {
   };
 }
 
-export type GeminiPart = GeminiTextPart | GeminiFunctionCallPart | GeminiFunctionResponsePart | Record<string, unknown>;
+export interface GeminiInlineDataPart {
+  inlineData: { mimeType: string; data: string };
+}
+
+export interface GeminiFileDataPart {
+  fileData: { mimeType?: string; fileUri: string };
+}
+
+export type GeminiPart =
+  | GeminiTextPart
+  | GeminiFunctionCallPart
+  | GeminiFunctionResponsePart
+  | GeminiInlineDataPart
+  | GeminiFileDataPart
+  | Record<string, unknown>;
 
 export interface GeminiContent {
   /** `model` is Gemini's name for the assistant role. */

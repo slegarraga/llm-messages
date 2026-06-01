@@ -2,6 +2,8 @@ export { toAnthropic, fromAnthropic } from './providers/anthropic.js';
 export { toGemini, fromGemini } from './providers/gemini.js';
 export { convert } from './convert.js';
 export type { ConversationOf } from './convert.js';
+export { parseDataUrl, toDataUrl } from './image.js';
+export type { NormalizedImage } from './image.js';
 
 export type {
   Provider,
@@ -16,16 +18,20 @@ export type {
   OpenAIToolCall,
   OpenAIContentPart,
   OpenAITextPart,
+  OpenAIImagePart,
   AnthropicConversation,
   AnthropicMessage,
   AnthropicContentBlock,
   AnthropicTextBlock,
   AnthropicToolUseBlock,
   AnthropicToolResultBlock,
+  AnthropicImageBlock,
   GeminiConversation,
   GeminiContent,
   GeminiPart,
   GeminiTextPart,
   GeminiFunctionCallPart,
   GeminiFunctionResponsePart,
+  GeminiInlineDataPart,
+  GeminiFileDataPart,
 } from './types.js';

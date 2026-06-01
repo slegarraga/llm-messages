@@ -9,6 +9,7 @@ import type {
   OpenAIToolMessage,
 } from '../types.js';
 import { Reporter, isRecord, parseArguments, textOf } from '../util.js';
+import { imageFromAnthropic, imageFromOpenAI, imageToAnthropic, imageToOpenAI } from '../image.js';
 import { splitSystem } from './openai.js';
 
 /* ------------------------------------------------------------------ */
@@ -62,9 +63,14 @@ function userContent(content: string | OpenAIContentPart[], reporter: Reporter):
   for (const part of content) {
     if (isRecord(part) && part.type === 'text' && typeof part.text === 'string') {
       blocks.push({ type: 'text', text: part.text });
-    } else {
-      reporter.warn('dropped-content', 'Dropped a non-text user content part not supported by this converter.');
+      continue;
     }
+    const image = imageFromOpenAI(part);
+    if (image) {
+      blocks.push(imageToAnthropic(image));
+      continue;
+    }
+    reporter.warn('dropped-content', 'Dropped an unsupported user content part.');
   }
   return blocks;
 }
@@ -132,7 +138,7 @@ export function fromAnthropic(conversation: AnthropicConversation, options: Conv
 
     if (message.role === 'user') {
       const toolResults = blocks.filter((b) => b.type === 'tool_result');
-      const textBlocks = blocks.filter((b) => b.type !== 'tool_result');
+      const contentBlocks = blocks.filter((b) => b.type !== 'tool_result');
       for (const block of toolResults) {
         out.push({
           role: 'tool',
@@ -140,8 +146,8 @@ export function fromAnthropic(conversation: AnthropicConversation, options: Conv
           content: textOf((block as { content?: unknown }).content),
         });
       }
-      if (textBlocks.length > 0) {
-        out.push({ role: 'user', content: textOf(textBlocks) });
+      if (contentBlocks.length > 0) {
+        out.push({ role: 'user', content: userContentToOpenAI(contentBlocks) });
       }
       continue;
     }
@@ -160,4 +166,20 @@ export function fromAnthropic(conversation: AnthropicConversation, options: Conv
   }
 
   return out;
+}
+
+/** Rebuilds OpenAI user content from Anthropic blocks, as a string unless an image is present. */
+function userContentToOpenAI(blocks: AnthropicContentBlock[]): string | OpenAIContentPart[] {
+  const hasImage = blocks.some((block) => imageFromAnthropic(block) !== null);
+  if (!hasImage) return textOf(blocks);
+  const parts: OpenAIContentPart[] = [];
+  for (const block of blocks) {
+    const image = imageFromAnthropic(block);
+    if (image) {
+      parts.push(imageToOpenAI(image));
+    } else if (isRecord(block) && block.type === 'text' && typeof block.text === 'string') {
+      parts.push({ type: 'text', text: block.text });
+    }
+  }
+  return parts;
 }

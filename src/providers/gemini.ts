@@ -10,6 +10,7 @@ import type {
   OpenAIToolMessage,
 } from '../types.js';
 import { Reporter, isRecord, parseArguments, textOf, unwrapResponse, wrapResponse } from '../util.js';
+import { imageFromGemini, imageFromOpenAI, imageToGemini, imageToOpenAI } from '../image.js';
 import { splitSystem } from './openai.js';
 
 /* ------------------------------------------------------------------ */
@@ -87,9 +88,14 @@ function userParts(content: string | OpenAIContentPart[], reporter: Reporter): G
   for (const part of content) {
     if (isRecord(part) && part.type === 'text' && typeof part.text === 'string') {
       parts.push({ text: part.text });
-    } else {
-      reporter.warn('dropped-content', 'Dropped a non-text user content part not supported by this converter.');
+      continue;
     }
+    const image = imageFromOpenAI(part);
+    if (image) {
+      parts.push(imageToGemini(image, reporter));
+      continue;
+    }
+    reporter.warn('dropped-content', 'Dropped an unsupported user content part.');
   }
   return parts.length > 0 ? parts : [{ text: '' }];
 }
@@ -178,18 +184,33 @@ export function fromGemini(conversation: GeminiConversation, options: ConvertOpt
     }
 
     // role 'user' or unspecified
-    const textPieces: string[] = [];
+    const contentParts: OpenAIContentPart[] = [];
+    let hasImage = false;
     for (const part of parts) {
       if (isRecord(part) && isRecord(part.functionResponse)) {
         const fr = part.functionResponse as { id?: string; name: string; response?: Record<string, unknown> };
         const id = resolveResponseId(fr, pending, reporter, generateId);
         out.push({ role: 'tool', tool_call_id: id, content: unwrapResponse(fr.response ?? {}) });
-      } else if (isRecord(part) && typeof part.text === 'string') {
-        textPieces.push(part.text);
+        continue;
+      }
+      const image = imageFromGemini(part);
+      if (image) {
+        contentParts.push(imageToOpenAI(image));
+        hasImage = true;
+        continue;
+      }
+      if (isRecord(part) && typeof part.text === 'string') {
+        contentParts.push({ type: 'text', text: part.text });
       }
     }
-    const text = textPieces.join('');
-    if (text) out.push({ role: 'user', content: text });
+    if (contentParts.length > 0) {
+      if (hasImage) {
+        out.push({ role: 'user', content: contentParts });
+      } else {
+        const text = textOf(contentParts);
+        if (text) out.push({ role: 'user', content: text });
+      }
+    }
   }
 
   return out;
