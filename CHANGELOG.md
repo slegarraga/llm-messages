@@ -4,6 +4,18 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-06-01
+
+### Added
+
+- Response normalization. `responseFromOpenAI`, `responseFromAnthropic`,
+  `responseFromGemini` and `normalizeResponse(body, { from })` parse a provider
+  response body into a canonical OpenAI assistant message plus a neutral
+  `finishReason` and `usage` (`inputTokens` / `outputTokens`). Tool-call arguments
+  are serialized to JSON strings; `finishReason` becomes `tool_calls` whenever a
+  tool was called (including Gemini, which reports `STOP`); Gemini tool calls
+  without an id get a deterministic one. (#4)
+
 ## [0.2.0] - 2026-06-01
 
 ### Added

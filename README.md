@@ -102,6 +102,27 @@ toGemini(messages, {
 Warning codes: `generated-id`, `unmapped-tool-result`, `merged-role`,
 `dropped-content`, `invalid-json-arguments`, `system-midstream`.
 
+## Reading responses
+
+The same idea applies to the read side. Normalize a provider's response body into
+a canonical OpenAI assistant message, plus a neutral finish reason and token usage:
+
+```ts
+import { responseFromAnthropic, normalizeResponse } from 'llm-messages';
+
+const { message, finishReason, usage } = responseFromAnthropic(anthropicResponseBody);
+// message     -> { role: 'assistant', content, tool_calls? }  (tool input re-serialized to a JSON string)
+// finishReason -> 'stop' | 'tool_calls' | 'length' | 'content_filter' | 'unknown'
+// usage       -> { inputTokens, outputTokens }
+
+// Or dispatch by provider:
+normalizeResponse(geminiResponseBody, { from: 'gemini' });
+```
+
+`finishReason` is normalized to `tool_calls` whenever the model called a tool, even
+for Gemini (which reports `STOP`). Gemini tool calls without an id get a
+deterministic one.
+
 ## Format cheatsheet
 
 |                  | OpenAI                   | Anthropic                        | Gemini                          |
