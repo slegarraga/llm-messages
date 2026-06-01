@@ -114,12 +114,35 @@ Warning codes: `generated-id`, `unmapped-tool-result`, `merged-role`,
 | Match key        | `tool_call_id`           | `tool_use_id`                    | function `name` (id optional)   |
 | Role alternation | not required             | strict                           | strict                          |
 
+## Images
+
+Image parts convert across all three providers:
+
+```ts
+const messages = [
+  {
+    role: 'user',
+    content: [
+      { type: 'text', text: 'What is in this image?' },
+      { type: 'image_url', image_url: { url: 'data:image/png;base64,iVBORw0KGgo...' } },
+    ],
+  },
+];
+
+toAnthropic(messages); // -> { type: 'image', source: { type: 'base64', media_type: 'image/png', data: '...' } }
+toGemini(messages); //    -> { inlineData: { mimeType: 'image/png', data: '...' } }
+```
+
+Base64 data URLs round trip losslessly. A remote `https` URL maps to an Anthropic
+`url` source; for Gemini it is emitted as `fileData.fileUri` with a
+`gemini-url-image` warning, since Gemini may require the Files API for non-Google
+URIs.
+
 ## Scope
 
-Version 0.x covers text, system prompts, and tool calls/results, which is the
-core of every agent loop. Multimodal parts (images, audio) are passed through
-where possible and reported as `dropped-content` otherwise; first-class
-multimodal mapping is on the roadmap.
+Version 0.x covers text, system prompts, tool calls/results and images, which is
+the core of every agent loop. Other modalities (audio, files) are passed through
+where possible and reported as `dropped-content` otherwise.
 
 ## Part of a set
 
