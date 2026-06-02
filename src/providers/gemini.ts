@@ -11,6 +11,7 @@ import type {
 } from '../types.js';
 import { Reporter, isRecord, parseArguments, textOf, unwrapResponse, wrapResponse } from '../util.js';
 import { imageFromGemini, imageFromOpenAI, imageToGemini, imageToOpenAI } from '../image.js';
+import { mediaFromGemini, mediaFromOpenAI, mediaToGemini, mediaToOpenAI } from '../media.js';
 import { splitSystem } from './openai.js';
 
 /* ------------------------------------------------------------------ */
@@ -93,6 +94,12 @@ function userParts(content: string | OpenAIContentPart[], reporter: Reporter): G
     const image = imageFromOpenAI(part);
     if (image) {
       parts.push(imageToGemini(image, reporter));
+      continue;
+    }
+    const media = mediaFromOpenAI(part);
+    if (media) {
+      const geminiPart = mediaToGemini(media, reporter);
+      if (geminiPart) parts.push(geminiPart);
       continue;
     }
     reporter.warn('dropped-content', 'Dropped an unsupported user content part.');
@@ -185,7 +192,7 @@ export function fromGemini(conversation: GeminiConversation, options: ConvertOpt
 
     // role 'user' or unspecified
     const contentParts: OpenAIContentPart[] = [];
-    let hasImage = false;
+    let hasMedia = false;
     for (const part of parts) {
       if (isRecord(part) && isRecord(part.functionResponse)) {
         const fr = part.functionResponse as { id?: string; name: string; response?: Record<string, unknown> };
@@ -196,7 +203,16 @@ export function fromGemini(conversation: GeminiConversation, options: ConvertOpt
       const image = imageFromGemini(part);
       if (image) {
         contentParts.push(imageToOpenAI(image));
-        hasImage = true;
+        hasMedia = true;
+        continue;
+      }
+      const media = mediaFromGemini(part);
+      if (media) {
+        const openaiPart = mediaToOpenAI(media);
+        if (openaiPart) {
+          contentParts.push(openaiPart);
+          hasMedia = true;
+        }
         continue;
       }
       if (isRecord(part) && typeof part.text === 'string') {
@@ -204,7 +220,7 @@ export function fromGemini(conversation: GeminiConversation, options: ConvertOpt
       }
     }
     if (contentParts.length > 0) {
-      if (hasImage) {
+      if (hasMedia) {
         out.push({ role: 'user', content: contentParts });
       } else {
         const text = textOf(contentParts);

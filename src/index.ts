@@ -4,6 +4,7 @@ export { convert } from './convert.js';
 export type { ConversationOf } from './convert.js';
 export { parseDataUrl, toDataUrl } from './image.js';
 export type { NormalizedImage } from './image.js';
+export type { MediaPart, MediaModality, MediaSource } from './media.js';
 export { responseFromOpenAI, responseFromAnthropic, responseFromGemini, normalizeResponse } from './response.js';
 export type { NormalizedResponse, FinishReason, Usage } from './response.js';
 
@@ -21,6 +22,8 @@ export type {
   OpenAIContentPart,
   OpenAITextPart,
   OpenAIImagePart,
+  OpenAIAudioPart,
+  OpenAIFilePart,
   AnthropicConversation,
   AnthropicMessage,
   AnthropicContentBlock,
@@ -28,6 +31,7 @@ export type {
   AnthropicToolUseBlock,
   AnthropicToolResultBlock,
   AnthropicImageBlock,
+  AnthropicDocumentBlock,
   GeminiConversation,
   GeminiContent,
   GeminiPart,

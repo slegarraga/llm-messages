@@ -63,13 +63,18 @@ export function imageToAnthropic(image: NormalizedImage): AnthropicImageBlock {
 export function imageFromGemini(part: unknown): NormalizedImage | null {
   if (isRecord(part) && isRecord(part.inlineData)) {
     const data = part.inlineData;
-    if (typeof data.mimeType === 'string' && typeof data.data === 'string') {
+    if (typeof data.mimeType === 'string' && typeof data.data === 'string' && data.mimeType.startsWith('image/')) {
       return { kind: 'base64', mediaType: data.mimeType, data: data.data };
     }
   }
   if (isRecord(part) && isRecord(part.fileData)) {
     const data = part.fileData;
-    if (typeof data.fileUri === 'string') return { kind: 'url', url: data.fileUri };
+    // A fileData with no mimeType is assumed to be an image (the only media we
+    // emit as a bare fileUri); a typed non-image fileData belongs to media.ts.
+    const mime = typeof data.mimeType === 'string' ? data.mimeType : '';
+    if (typeof data.fileUri === 'string' && (mime === '' || mime.startsWith('image/'))) {
+      return { kind: 'url', url: data.fileUri };
+    }
   }
   return null;
 }

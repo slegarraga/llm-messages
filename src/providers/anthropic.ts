@@ -10,6 +10,7 @@ import type {
 } from '../types.js';
 import { Reporter, isRecord, parseArguments, textOf } from '../util.js';
 import { imageFromAnthropic, imageFromOpenAI, imageToAnthropic, imageToOpenAI } from '../image.js';
+import { mediaFromAnthropic, mediaFromOpenAI, mediaToAnthropic, mediaToOpenAI } from '../media.js';
 import { splitSystem } from './openai.js';
 
 /* ------------------------------------------------------------------ */
@@ -70,6 +71,12 @@ function userContent(content: string | OpenAIContentPart[], reporter: Reporter):
       blocks.push(imageToAnthropic(image));
       continue;
     }
+    const media = mediaFromOpenAI(part);
+    if (media) {
+      const block = mediaToAnthropic(media, reporter);
+      if (block) blocks.push(block);
+      continue;
+    }
     reporter.warn('dropped-content', 'Dropped an unsupported user content part.');
   }
   return blocks;
@@ -127,7 +134,7 @@ function asBlocks(content: string | AnthropicContentBlock[]): AnthropicContentBl
  * `tool_result` blocks become standalone `role: 'tool'` messages.
  */
 export function fromAnthropic(conversation: AnthropicConversation, options: ConvertOptions = {}): OpenAIMessage[] {
-  void options;
+  const reporter = new Reporter(options);
   const out: OpenAIMessage[] = [];
   if (conversation.system) {
     out.push({ role: 'system', content: textOf(conversation.system) });
@@ -147,7 +154,7 @@ export function fromAnthropic(conversation: AnthropicConversation, options: Conv
         });
       }
       if (contentBlocks.length > 0) {
-        out.push({ role: 'user', content: userContentToOpenAI(contentBlocks) });
+        out.push({ role: 'user', content: userContentToOpenAI(contentBlocks, reporter) });
       }
       continue;
     }
@@ -168,16 +175,25 @@ export function fromAnthropic(conversation: AnthropicConversation, options: Conv
   return out;
 }
 
-/** Rebuilds OpenAI user content from Anthropic blocks, as a string unless an image is present. */
-function userContentToOpenAI(blocks: AnthropicContentBlock[]): string | OpenAIContentPart[] {
-  const hasImage = blocks.some((block) => imageFromAnthropic(block) !== null);
-  if (!hasImage) return textOf(blocks);
+/** Rebuilds OpenAI user content from Anthropic blocks, as a string unless media is present. */
+function userContentToOpenAI(blocks: AnthropicContentBlock[], reporter: Reporter): string | OpenAIContentPart[] {
+  const hasMedia = blocks.some((block) => imageFromAnthropic(block) !== null || mediaFromAnthropic(block) !== null);
+  if (!hasMedia) return textOf(blocks);
   const parts: OpenAIContentPart[] = [];
   for (const block of blocks) {
     const image = imageFromAnthropic(block);
     if (image) {
       parts.push(imageToOpenAI(image));
-    } else if (isRecord(block) && block.type === 'text' && typeof block.text === 'string') {
+      continue;
+    }
+    const media = mediaFromAnthropic(block);
+    if (media) {
+      const part = mediaToOpenAI(media);
+      if (part) parts.push(part);
+      else reporter.warn('dropped-content', 'A document URL has no OpenAI Chat Completions equivalent; dropped.');
+      continue;
+    }
+    if (isRecord(block) && block.type === 'text' && typeof block.text === 'string') {
       parts.push({ type: 'text', text: block.text });
     }
   }

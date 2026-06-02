@@ -19,7 +19,9 @@ export type WarningCode =
   | 'dropped-content'
   | 'invalid-json-arguments'
   | 'system-midstream'
-  | 'gemini-url-image';
+  | 'gemini-url-image'
+  | 'gemini-url-media'
+  | 'unsupported-modality';
 
 /** A non fatal event raised during conversion. */
 export interface Warning {
@@ -48,8 +50,25 @@ export interface OpenAIImagePart {
   image_url: { url: string; detail?: 'auto' | 'low' | 'high' | 'original' };
 }
 
-/** A content part. Unknown part types (audio, files) are preserved verbatim. */
-export type OpenAIContentPart = OpenAITextPart | OpenAIImagePart | { type: string; [key: string]: unknown };
+export interface OpenAIAudioPart {
+  type: 'input_audio';
+  /** `data` is raw base64 (no data URL prefix); `format` is `wav` or `mp3`. */
+  input_audio: { data: string; format: string };
+}
+
+export interface OpenAIFilePart {
+  type: 'file';
+  /** `file_data` is a `data:<mediaType>;base64,<data>` data URL, or use `file_id`. */
+  file: { file_data?: string; file_id?: string; filename?: string };
+}
+
+/** A content part. Unknown part types are preserved verbatim. */
+export type OpenAIContentPart =
+  | OpenAITextPart
+  | OpenAIImagePart
+  | OpenAIAudioPart
+  | OpenAIFilePart
+  | { type: string; [key: string]: unknown };
 
 export interface OpenAIToolCall {
   id: string;
@@ -119,11 +138,20 @@ export interface AnthropicImageBlock {
   source: { type: 'base64'; media_type: string; data: string } | { type: 'url'; url: string };
 }
 
+export interface AnthropicDocumentBlock {
+  type: 'document';
+  source:
+    | { type: 'base64'; media_type: string; data: string }
+    | { type: 'url'; url: string }
+    | { type: 'file'; file_id: string };
+}
+
 export type AnthropicContentBlock =
   | AnthropicTextBlock
   | AnthropicToolUseBlock
   | AnthropicToolResultBlock
   | AnthropicImageBlock
+  | AnthropicDocumentBlock
   | { type: string; [key: string]: unknown };
 
 export interface AnthropicMessage {
