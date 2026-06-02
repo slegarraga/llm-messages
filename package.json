@@ -1,7 +1,7 @@
 {
   "name": "llm-messages",
-  "version": "0.3.0",
-  "description": "Convert chat conversations and responses between OpenAI, Anthropic and Gemini. Tool calls, images, system prompts and roles handled. Zero dependencies.",
+  "version": "0.4.0",
+  "description": "Convert chat conversations and responses between OpenAI, Anthropic and Gemini. Tool calls, images, audio, documents and roles handled. Zero dependencies.",
   "keywords": [
     "openai",
     "anthropic",
