@@ -135,7 +135,7 @@ deterministic one.
 | Match key        | `tool_call_id`           | `tool_use_id`                    | function `name` (id optional)   |
 | Role alternation | not required             | strict                           | strict                          |
 
-## Images
+## Images, audio and documents
 
 Image parts convert across all three providers:
 
@@ -159,11 +159,16 @@ Base64 data URLs round trip losslessly. A remote `https` URL maps to an Anthropi
 `gemini-url-image` warning, since Gemini may require the Files API for non-Google
 URIs.
 
+**Audio** (`input_audio`) and **documents** (`file`, e.g. PDF) convert too. Audio
+moves between OpenAI and Gemini; Anthropic has no audio input, so an audio part is
+dropped with an `unsupported-modality` warning. Documents convert across all three
+(OpenAI `file`, Anthropic `document`, Gemini `inlineData`).
+
 ## Scope
 
-Version 0.x covers text, system prompts, tool calls/results and images, which is
-the core of every agent loop. Other modalities (audio, files) are passed through
-where possible and reported as `dropped-content` otherwise.
+Version 0.x covers text, system prompts, tool calls/results, images, audio and
+documents, which is the core of every agent loop. Unsupported parts are reported
+via `dropped-content` rather than failing.
 
 ## Part of a set
 

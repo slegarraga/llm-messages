@@ -4,6 +4,17 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-06-01
+
+### Added
+
+- Audio and document content parts. Audio (OpenAI `input_audio`) converts between
+  OpenAI and Gemini; Anthropic has no audio input, so audio is dropped with an
+  `unsupported-modality` warning. Documents (OpenAI `file`, Anthropic `document`,
+  Gemini `inlineData` / `fileData`) convert across all three, base64 losslessly.
+  Adds the `MediaPart` type and `unsupported-modality` / `gemini-url-media`
+  warning codes. (#5)
+
 ## [0.3.0] - 2026-06-01
 
 ### Added
