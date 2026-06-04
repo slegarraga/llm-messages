@@ -171,6 +171,12 @@ Version 0.x covers text, system prompts, tool calls/results, images, audio and
 documents, which is the core of every agent loop. Unsupported parts are reported
 via `dropped-content` rather than failing.
 
+## Roadmap
+
+See [ROADMAP.md](./ROADMAP.md) for current maintenance priorities, including
+OpenAI Responses API coverage, live conformance fixtures and tool-call edge
+cases.
+
 ## Provider portability suite
 
 `llm-messages` is the conversation boundary in a small provider-portability
