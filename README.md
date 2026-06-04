@@ -184,6 +184,9 @@ For teams evaluating the package, the
 [adoption guide](./docs/adoption-guide.md) covers the OpenAI-compatible boundary,
 local validation and production checks.
 
+Security posture is tracked in [docs/security-posture.md](./docs/security-posture.md),
+including CodeQL, OpenSSF Scorecard, Dependabot and branch rules.
+
 ## Provider portability suite
 
 `llm-messages` is the conversation boundary in a small provider-portability
