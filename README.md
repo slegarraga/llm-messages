@@ -179,6 +179,10 @@ cases. The [conformance fixtures plan](./docs/conformance-fixtures.md) describes
 how API credits should be used to refresh deterministic public fixtures without
 putting secrets in CI.
 
+For teams evaluating the package, the
+[adoption guide](./docs/adoption-guide.md) covers the OpenAI-compatible boundary,
+local validation and production checks.
+
 ## Provider portability suite
 
 `llm-messages` is the conversation boundary in a small provider-portability
