@@ -9,7 +9,7 @@ The latest published `0.x` release receives security fixes.
 Please report security issues privately rather than opening a public issue.
 
 - Use GitHub's [private vulnerability reporting](https://github.com/slegarraga/llm-messages/security/advisories/new), or
-- Email **slegarraga@gmail.com** with the details.
+- Email **sebastian@0a.cl** with the details.
 
 Include a description, a reproduction, and the impact. You can expect an initial
 response within a few days. Once a fix is released, we are happy to credit you in
