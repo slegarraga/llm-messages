@@ -1,6 +1,6 @@
 {
   "name": "llm-messages",
-  "version": "0.4.5",
+  "version": "0.4.6",
   "description": "Convert chat conversations and responses between OpenAI, Anthropic and Gemini. Tool calls, images, audio, documents and roles handled. Zero dependencies.",
   "keywords": [
     "openai",
@@ -54,6 +54,7 @@
   },
   "files": [
     "dist",
+    "docs",
     "README.md",
     "ROADMAP.md",
     "LICENSE",

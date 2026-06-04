@@ -20,6 +20,8 @@ fallback behavior matter.
    payloads, keeping the committed test fixtures deterministic and safe to run
    without API keys.
 
+   Plan: [docs/conformance-fixtures.md](./docs/conformance-fixtures.md)
+
 3. **Tool-call edge cases**
 
    Expand tests for parallel tool calls, missing provider ids, invalid JSON

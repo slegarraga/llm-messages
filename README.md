@@ -175,7 +175,9 @@ via `dropped-content` rather than failing.
 
 See [ROADMAP.md](./ROADMAP.md) for current maintenance priorities, including
 OpenAI Responses API coverage, live conformance fixtures and tool-call edge
-cases.
+cases. The [conformance fixtures plan](./docs/conformance-fixtures.md) describes
+how API credits should be used to refresh deterministic public fixtures without
+putting secrets in CI.
 
 ## Provider portability suite
 
