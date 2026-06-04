@@ -16,4 +16,3 @@
 `llm-messages` is maintained as a public MIT package for provider-portable
 message and tool-call conversion. The primary maintainer controls the GitHub
 repository, npm package, release tags and security policy.
-

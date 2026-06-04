@@ -171,11 +171,25 @@ Version 0.x covers text, system prompts, tool calls/results, images, audio and
 documents, which is the core of every agent loop. Unsupported parts are reported
 via `dropped-content` rather than failing.
 
-## Part of a set
+## Provider portability suite
 
-`llm-messages` pairs with [`tool-schema`](https://github.com/slegarraga/tool-schema),
-which converts your tool/function **schemas** across the same providers. Together
-they let you write an agent once and run it on any LLM.
+`llm-messages` is the conversation boundary in a small provider-portability
+suite for OpenAI-compatible agent infrastructure:
+
+- [`tool-schema`](https://github.com/slegarraga/tool-schema) converts one JSON
+  Schema into provider-specific tool/function schemas.
+- [`llm-sse`](https://github.com/slegarraga/llm-sse) parses streaming provider
+  responses into unified events.
+- [`llm-errors`](https://github.com/slegarraga/llm-errors) normalizes provider
+  errors, retry hints and fallback decisions.
+- [`json-from-llm`](https://github.com/slegarraga/json-from-llm) extracts JSON
+  before it enters a tool or message pipeline.
+- [`llm-portability-demo`](https://github.com/slegarraga/llm-portability-demo)
+  shows the whole flow offline, with no API key required.
+
+Read the
+[provider portability map](https://github.com/slegarraga/llm-portability-demo/blob/main/docs/provider-portability.md)
+for the package roles, OpenAI-compatible hub shape and demo flow.
 
 ## License
 
