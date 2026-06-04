@@ -4,6 +4,13 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.8] - 2026-06-04
+
+### Changed
+
+- Updated CI to run on Node 20 and 22, matching the secure Vitest development
+  tooling while keeping the package runtime build target at Node 18.
+
 ## [0.4.7] - 2026-06-04
 
 ### Changed
