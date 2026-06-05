@@ -5,8 +5,14 @@ export type { ConversationOf } from './convert.js';
 export { parseDataUrl, toDataUrl } from './image.js';
 export type { NormalizedImage } from './image.js';
 export type { MediaPart, MediaModality, MediaSource } from './media.js';
-export { responseFromOpenAI, responseFromAnthropic, responseFromGemini, normalizeResponse } from './response.js';
-export type { NormalizedResponse, FinishReason, Usage } from './response.js';
+export {
+  responseFromOpenAI,
+  responseFromOpenAIResponses,
+  responseFromAnthropic,
+  responseFromGemini,
+  normalizeResponse,
+} from './response.js';
+export type { NormalizedResponse, FinishReason, Usage, ResponseProvider } from './response.js';
 
 export type {
   Provider,
