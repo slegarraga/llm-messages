@@ -9,8 +9,9 @@ fallback behavior matter.
 
 1. **OpenAI Responses API coverage**
 
-   Track and test how Responses API text, multimodal and tool-call payloads map
-   to the current OpenAI Chat Completions-compatible hub shape.
+   Initial response normalization now maps Responses API `output_text` and
+   `function_call` items back into the current OpenAI Chat Completions-compatible
+   hub shape. Next: expand multimodal and streaming conformance fixtures.
 
    Public issue: https://github.com/slegarraga/llm-messages/issues/6
 

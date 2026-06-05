@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { responseFromOpenAI, responseFromAnthropic, responseFromGemini, normalizeResponse } from '../src/index.ts';
+import {
+  responseFromOpenAI,
+  responseFromOpenAIResponses,
+  responseFromAnthropic,
+  responseFromGemini,
+  normalizeResponse,
+} from '../src/index.ts';
 import type { Warning } from '../src/index.ts';
 
 describe('responseFromOpenAI', () => {
@@ -25,6 +31,55 @@ describe('responseFromOpenAI', () => {
     });
     expect(r.finishReason).toBe('tool_calls');
     expect(r.usage).toEqual({ inputTokens: 10, outputTokens: 5 });
+  });
+});
+
+describe('responseFromOpenAIResponses', () => {
+  it('collects output_text items, function calls, finish reason and usage', () => {
+    const r = responseFromOpenAIResponses({
+      object: 'response',
+      status: 'completed',
+      output: [
+        {
+          type: 'message',
+          role: 'assistant',
+          content: [{ type: 'output_text', text: 'Checking.' }],
+        },
+        {
+          type: 'function_call',
+          call_id: 'call_weather',
+          name: 'get_weather',
+          arguments: '{"location":"Paris"}',
+        },
+      ],
+      usage: { input_tokens: 12, output_tokens: 6, total_tokens: 18 },
+    });
+
+    expect(r.message).toEqual({
+      role: 'assistant',
+      content: 'Checking.',
+      tool_calls: [
+        {
+          id: 'call_weather',
+          type: 'function',
+          function: { name: 'get_weather', arguments: '{"location":"Paris"}' },
+        },
+      ],
+    });
+    expect(r.finishReason).toBe('tool_calls');
+    expect(r.usage).toEqual({ inputTokens: 12, outputTokens: 6 });
+  });
+
+  it('maps incomplete max output token responses to length', () => {
+    const r = responseFromOpenAIResponses({
+      object: 'response',
+      status: 'incomplete',
+      incomplete_details: { reason: 'max_output_tokens' },
+      output: [{ type: 'message', role: 'assistant', content: [{ type: 'output_text', text: 'partial' }] }],
+    });
+
+    expect(r.message).toEqual({ role: 'assistant', content: 'partial' });
+    expect(r.finishReason).toBe('length');
   });
 });
 
@@ -96,6 +151,15 @@ describe('normalizeResponse', () => {
     const r = normalizeResponse(
       { choices: [{ message: { role: 'assistant', content: 'hi' }, finish_reason: 'stop' }] },
       { from: 'openai' },
+    );
+    expect(r.message.content).toBe('hi');
+    expect(r.finishReason).toBe('stop');
+  });
+
+  it('dispatches OpenAI Responses API bodies explicitly', () => {
+    const r = normalizeResponse(
+      { object: 'response', status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: 'hi' }] }] },
+      { from: 'openai-responses' },
     );
     expect(r.message.content).toBe('hi');
     expect(r.finishReason).toBe('stop');

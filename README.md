@@ -110,20 +110,25 @@ The same idea applies to the read side. Normalize a provider's response body int
 a canonical OpenAI assistant message, plus a neutral finish reason and token usage:
 
 ```ts
-import { responseFromAnthropic, normalizeResponse } from 'llm-messages';
+import { responseFromAnthropic, responseFromOpenAIResponses, normalizeResponse } from 'llm-messages';
 
 const { message, finishReason, usage } = responseFromAnthropic(anthropicResponseBody);
 // message     -> { role: 'assistant', content, tool_calls? }  (tool input re-serialized to a JSON string)
 // finishReason -> 'stop' | 'tool_calls' | 'length' | 'content_filter' | 'unknown'
 // usage       -> { inputTokens, outputTokens }
 
+const responses = responseFromOpenAIResponses(openaiResponsesBody);
+// OpenAI Responses API `output_text` items become assistant `content`.
+// `function_call` items become Chat Completions-compatible `tool_calls`.
+
 // Or dispatch by provider:
 normalizeResponse(geminiResponseBody, { from: 'gemini' });
+normalizeResponse(openaiResponsesBody, { from: 'openai-responses' });
 ```
 
 `finishReason` is normalized to `tool_calls` whenever the model called a tool, even
-for Gemini (which reports `STOP`). Gemini tool calls without an id get a
-deterministic one.
+for Gemini (which reports `STOP`) and Responses API bodies with `function_call`
+items. Gemini tool calls without an id get a deterministic one.
 
 ## Format cheatsheet
 
