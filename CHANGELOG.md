@@ -6,13 +6,28 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-06-07
+
 ### Added
 
 - Added OpenAI Responses API response normalization via
-  `responseFromOpenAIResponses(...)` and `normalizeResponse(body, { from:
-  'openai-responses' })`, mapping `output_text` to assistant content,
-  `function_call` to Chat Completions-compatible `tool_calls`, and Responses
-  usage/status fields to neutral `usage` and `finishReason` values.
+  `responseFromOpenAIResponses(...)` and explicit `normalizeResponse(...)`
+  routing, mapping `output_text` to assistant content, `function_call` to Chat
+  Completions-compatible `tool_calls`, and Responses usage/status fields to
+  neutral `usage` and `finishReason` values.
+- Preserved Anthropic `tool_result.is_error` as optional canonical tool-message
+  metadata across Anthropic round trips.
+- Preserved standalone Gemini `functionResponse.name` as optional canonical
+  tool-message metadata so orphaned tool results can convert back to Gemini
+  without using the result id as the function name.
+- Added `dropped-metadata` warnings for OpenAI message names and provider-only
+  tool result metadata that the selected target provider cannot represent.
+
+### Fixed
+
+- Kept empty user turns intact when round-tripping through Anthropic or Gemini.
+- Preserved mixed Anthropic user text and `tool_result` block order when
+  converting into canonical OpenAI-compatible messages and back.
 
 ## [0.4.9] - 2026-06-04
 

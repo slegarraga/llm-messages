@@ -48,7 +48,20 @@ export function toGemini(messages: OpenAIMessage[], options: ConvertOptions = {}
       let j = i;
       while (j < rest.length && rest[j].role === 'tool') {
         const tool = rest[j] as OpenAIToolMessage;
-        const name = idToName.get(tool.tool_call_id);
+        const matchingName = idToName.get(tool.tool_call_id);
+        if (typeof tool.is_error === 'boolean') {
+          reporter.warn(
+            'dropped-metadata',
+            `Tool message is_error=${tool.is_error} has no Gemini functionResponse equivalent; dropped.`,
+          );
+        }
+        if (typeof tool.name === 'string' && matchingName && tool.name !== matchingName) {
+          reporter.warn(
+            'dropped-metadata',
+            `Tool message name '${tool.name}' differs from matching tool call '${matchingName}'; used the tool-call function name for Gemini.`,
+          );
+        }
+        const name = matchingName ?? tool.name;
         if (!name) {
           reporter.warn(
             'unmapped-tool-result',
@@ -70,10 +83,12 @@ export function toGemini(messages: OpenAIMessage[], options: ConvertOptions = {}
     }
 
     if (message.role === 'user') {
+      warnDroppedName('User', message.name, 'Gemini', reporter);
       contents.push({ role: 'user', parts: userParts(message.content, reporter) });
       continue;
     }
 
+    warnDroppedName('Assistant', message.name, 'Gemini', reporter);
     contents.push({ role: 'model', parts: assistantParts(message, reporter) });
   }
 
@@ -121,6 +136,11 @@ function assistantParts(message: OpenAIAssistantMessage, reporter: Reporter): Ge
     });
   }
   return parts.length > 0 ? parts : [{ text: '' }];
+}
+
+function warnDroppedName(role: string, name: string | undefined, provider: string, reporter: Reporter): void {
+  if (typeof name !== 'string') return;
+  reporter.warn('dropped-metadata', `${role} message name '${name}' has no ${provider} equivalent; dropped.`);
 }
 
 /** Merges adjacent same-role contents by concatenating their `parts` arrays. */
@@ -196,8 +216,13 @@ export function fromGemini(conversation: GeminiConversation, options: ConvertOpt
     for (const part of parts) {
       if (isRecord(part) && isRecord(part.functionResponse)) {
         const fr = part.functionResponse as { id?: string; name: string; response?: Record<string, unknown> };
-        const id = resolveResponseId(fr, pending, reporter, generateId);
-        out.push({ role: 'tool', tool_call_id: id, content: unwrapResponse(fr.response ?? {}) });
+        const { id, matched } = resolveResponseId(fr, pending, reporter, generateId);
+        out.push({
+          role: 'tool',
+          tool_call_id: id,
+          content: unwrapResponse(fr.response ?? {}),
+          ...(matched ? {} : { name: fr.name }),
+        });
         continue;
       }
       const image = imageFromGemini(part);
@@ -224,7 +249,7 @@ export function fromGemini(conversation: GeminiConversation, options: ConvertOpt
         out.push({ role: 'user', content: contentParts });
       } else {
         const text = textOf(contentParts);
-        if (text) out.push({ role: 'user', content: text });
+        out.push({ role: 'user', content: text });
       }
     }
   }
@@ -237,22 +262,22 @@ function resolveResponseId(
   pending: { id: string; name: string }[],
   reporter: Reporter,
   generateId: (name: string) => string,
-): string {
+): { id: string; matched: boolean } {
   if (response.id) {
     const index = pending.findIndex((p) => p.id === response.id);
     if (index >= 0) pending.splice(index, 1);
-    return response.id;
+    return { id: response.id, matched: index >= 0 };
   }
   const index = pending.findIndex((p) => p.name === response.name);
   if (index >= 0) {
     const { id } = pending[index];
     pending.splice(index, 1);
-    return id;
+    return { id, matched: true };
   }
   const id = generateId(response.name);
   reporter.warn(
     'unmapped-tool-result',
     `Gemini functionResponse for '${response.name}' had no matching call; generated '${id}'.`,
   );
-  return id;
+  return { id, matched: false };
 }

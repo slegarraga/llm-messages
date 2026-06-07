@@ -158,7 +158,11 @@ describe('normalizeResponse', () => {
 
   it('dispatches OpenAI Responses API bodies explicitly', () => {
     const r = normalizeResponse(
-      { object: 'response', status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: 'hi' }] }] },
+      {
+        object: 'response',
+        status: 'completed',
+        output: [{ type: 'message', content: [{ type: 'output_text', text: 'hi' }] }],
+      },
       { from: 'openai-responses' },
     );
     expect(r.message.content).toBe('hi');

@@ -88,7 +88,10 @@ fromGemini(toGemini(messages)); // deep-equals the original `messages`
 
 Arguments are parsed and re-serialized, ids are preserved (and regenerated
 deterministically when a Gemini payload omits them), and parallel tool results
-are grouped into the single user turn each provider expects.
+are grouped into the single user turn each provider expects. Anthropic
+`tool_result.is_error` is preserved as optional canonical tool-message metadata;
+standalone Gemini `functionResponse.name` is also preserved so orphaned tool
+results can be sent back to Gemini without renaming the function to the id.
 
 ## Conversion report
 
@@ -102,7 +105,9 @@ toGemini(messages, {
 ```
 
 Warning codes: `generated-id`, `unmapped-tool-result`, `merged-role`,
-`dropped-content`, `invalid-json-arguments`, `system-midstream`.
+`dropped-content`, `dropped-metadata`, `invalid-json-arguments`,
+`system-midstream`, `gemini-url-image`, `gemini-url-media`,
+`unsupported-modality`.
 
 ## Reading responses
 
@@ -175,7 +180,11 @@ dropped with an `unsupported-modality` warning. Documents convert across all thr
 
 Version 0.x covers text, system prompts, tool calls/results, images, audio and
 documents, which is the core of every agent loop. Unsupported parts are reported
-via `dropped-content` rather than failing.
+via `dropped-content` rather than failing. Provider-only fields are preserved
+only when the canonical OpenAI-compatible shape has an explicit optional
+metadata field for them, such as Anthropic `tool_result.is_error` and standalone
+Gemini `functionResponse.name`. When that metadata has no target-provider
+equivalent, conversion continues and reports `dropped-metadata`.
 
 ## Roadmap
 

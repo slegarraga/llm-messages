@@ -20,6 +20,11 @@ const canonical: OpenAIMessage[] = [
   { role: 'tool', tool_call_id: 'call_abc', content: '15C partly cloudy' },
 ];
 
+const emptyCanonical: OpenAIMessage[] = [
+  { role: 'user', content: '' },
+  { role: 'assistant', content: null },
+];
+
 describe('round trip', () => {
   it('OpenAI -> Anthropic -> OpenAI is identity', () => {
     expect(fromAnthropic(toAnthropic(canonical))).toEqual(canonical);
@@ -33,5 +38,17 @@ describe('round trip', () => {
     const back = fromGemini(toGemini(canonical));
     const assistant = back.find((m) => m.role === 'assistant');
     expect(assistant && 'tool_calls' in assistant && assistant.tool_calls?.[0].id).toBe('call_abc');
+  });
+
+  it('preserves empty user turns through provider round trips', () => {
+    expect(fromAnthropic(toAnthropic(emptyCanonical))).toEqual(emptyCanonical);
+    expect(fromGemini(toGemini(emptyCanonical))).toEqual(emptyCanonical);
+  });
+
+  it('preserves Anthropic tool_result error metadata through the canonical hub', () => {
+    const withError: OpenAIMessage[] = [
+      { role: 'tool', tool_call_id: 'call_error', content: 'failed', is_error: true },
+    ];
+    expect(fromAnthropic(toAnthropic(withError))).toEqual(withError);
   });
 });

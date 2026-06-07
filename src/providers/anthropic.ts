@@ -37,7 +37,18 @@ export function toAnthropic(messages: OpenAIMessage[], options: ConvertOptions =
       let j = i;
       while (j < rest.length && rest[j].role === 'tool') {
         const tool = rest[j] as OpenAIToolMessage;
-        blocks.push({ type: 'tool_result', tool_use_id: tool.tool_call_id, content: textOf(tool.content) });
+        if (typeof tool.name === 'string') {
+          reporter.warn(
+            'dropped-metadata',
+            `Tool message name '${tool.name}' has no Anthropic tool_result equivalent; dropped.`,
+          );
+        }
+        blocks.push({
+          type: 'tool_result',
+          tool_use_id: tool.tool_call_id,
+          content: textOf(tool.content),
+          ...(typeof tool.is_error === 'boolean' ? { is_error: tool.is_error } : {}),
+        });
         j++;
       }
       out.push({ role: 'user', content: blocks });
@@ -46,6 +57,7 @@ export function toAnthropic(messages: OpenAIMessage[], options: ConvertOptions =
     }
 
     if (message.role === 'user') {
+      warnDroppedName('User', message.name, 'Anthropic', reporter);
       out.push({ role: 'user', content: userContent(message.content, reporter) });
       continue;
     }
@@ -83,6 +95,7 @@ function userContent(content: string | OpenAIContentPart[], reporter: Reporter):
 }
 
 function assistantContent(message: OpenAIAssistantMessage, reporter: Reporter): string | AnthropicContentBlock[] {
+  warnDroppedName('Assistant', message.name, 'Anthropic', reporter);
   const text = textOf(message.content ?? '');
   const toolCalls = message.tool_calls ?? [];
   if (toolCalls.length === 0) return text;
@@ -98,6 +111,11 @@ function assistantContent(message: OpenAIAssistantMessage, reporter: Reporter): 
     });
   }
   return blocks;
+}
+
+function warnDroppedName(role: string, name: string | undefined, provider: string, reporter: Reporter): void {
+  if (typeof name !== 'string') return;
+  reporter.warn('dropped-metadata', `${role} message name '${name}' has no ${provider} equivalent; dropped.`);
 }
 
 /** Merges adjacent same-role messages by concatenating their content blocks. */
@@ -144,18 +162,36 @@ export function fromAnthropic(conversation: AnthropicConversation, options: Conv
     const blocks = asBlocks(message.content);
 
     if (message.role === 'user') {
-      const toolResults = blocks.filter((b) => b.type === 'tool_result');
-      const contentBlocks = blocks.filter((b) => b.type !== 'tool_result');
-      for (const block of toolResults) {
+      if (blocks.length === 0) {
+        out.push({ role: 'user', content: '' });
+        continue;
+      }
+
+      let contentBlocks: AnthropicContentBlock[] = [];
+      const flushContent = (): void => {
+        if (contentBlocks.length > 0) {
+          out.push({ role: 'user', content: userContentToOpenAI(contentBlocks, reporter) });
+          contentBlocks = [];
+        }
+      };
+
+      for (const block of blocks) {
+        if (block.type !== 'tool_result') {
+          contentBlocks.push(block);
+          continue;
+        }
+
+        flushContent();
         out.push({
           role: 'tool',
           tool_call_id: String((block as { tool_use_id?: string }).tool_use_id ?? ''),
           content: textOf((block as { content?: unknown }).content),
+          ...(typeof (block as { is_error?: unknown }).is_error === 'boolean'
+            ? { is_error: (block as { is_error: boolean }).is_error }
+            : {}),
         });
       }
-      if (contentBlocks.length > 0) {
-        out.push({ role: 'user', content: userContentToOpenAI(contentBlocks, reporter) });
-      }
+      flushContent();
       continue;
     }
 

@@ -17,6 +17,7 @@ export type WarningCode =
   | 'unmapped-tool-result'
   | 'merged-role'
   | 'dropped-content'
+  | 'dropped-metadata'
   | 'invalid-json-arguments'
   | 'system-midstream'
   | 'gemini-url-image'
@@ -104,7 +105,11 @@ export interface OpenAIAssistantMessage {
 export interface OpenAIToolMessage {
   role: 'tool';
   tool_call_id: string;
+  /** Optional provider metadata used to preserve Gemini functionResponse names. */
+  name?: string;
   content: string | OpenAITextPart[];
+  /** Optional provider metadata used to preserve Anthropic tool_result errors. */
+  is_error?: boolean;
 }
 
 export type OpenAIMessage = OpenAISystemMessage | OpenAIUserMessage | OpenAIAssistantMessage | OpenAIToolMessage;

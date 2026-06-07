@@ -42,6 +42,41 @@ describe('toAnthropic', () => {
     expect((userTurn.content as AnthropicContentBlock[]).map((b) => b.type)).toEqual(['tool_result', 'tool_result']);
   });
 
+  it('preserves tool_result error flags from canonical tool messages', () => {
+    const { messages } = toAnthropic([
+      { role: 'tool', tool_call_id: 't1', content: 'failed', is_error: true },
+      { role: 'tool', tool_call_id: 't2', content: 'ok', is_error: false },
+    ]);
+    const content = messages[0].content as AnthropicContentBlock[];
+    expect(content).toEqual([
+      { type: 'tool_result', tool_use_id: 't1', content: 'failed', is_error: true },
+      { type: 'tool_result', tool_use_id: 't2', content: 'ok', is_error: false },
+    ]);
+  });
+
+  it('reports OpenAI message metadata that Anthropic cannot represent', () => {
+    const warnings: Warning[] = [];
+    toAnthropic(
+      [
+        { role: 'system', name: 'policy', content: 'Be concise.' },
+        { role: 'user', name: 'customer', content: 'Hi' },
+        { role: 'assistant', name: 'planner', content: null },
+        { role: 'tool', tool_call_id: 'orphan', name: 'lookup_order', content: 'done' },
+      ],
+      { onWarning: (w) => warnings.push(w) },
+    );
+
+    const messages = warnings.filter((w) => w.code === 'dropped-metadata').map((w) => w.message);
+    expect(messages).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("system message name 'policy'"),
+        expect.stringContaining("User message name 'customer'"),
+        expect.stringContaining("Assistant message name 'planner'"),
+        expect.stringContaining("Tool message name 'lookup_order'"),
+      ]),
+    );
+  });
+
   it('reports invalid tool-call arguments instead of throwing', () => {
     const warnings: Warning[] = [];
     toAnthropic(
@@ -72,5 +107,42 @@ describe('fromAnthropic', () => {
       messages: [{ role: 'user', content: [{ type: 'tool_result', tool_use_id: 't1', content: 'result' }] }],
     });
     expect(out).toEqual([{ role: 'tool', tool_call_id: 't1', content: 'result' }]);
+  });
+
+  it('preserves mixed user text, tool_result errors and block order', () => {
+    const out = fromAnthropic({
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: 'before' },
+            { type: 'tool_result', tool_use_id: 't1', content: 'failed', is_error: true },
+            { type: 'text', text: 'after' },
+          ],
+        },
+      ],
+    });
+    expect(out).toEqual([
+      { role: 'user', content: 'before' },
+      { role: 'tool', tool_call_id: 't1', content: 'failed', is_error: true },
+      { role: 'user', content: 'after' },
+    ]);
+  });
+
+  it('round trips mixed text and tool_result blocks back to one Anthropic user turn', () => {
+    const conversation = {
+      messages: [
+        {
+          role: 'user' as const,
+          content: [
+            { type: 'text' as const, text: 'before' },
+            { type: 'tool_result' as const, tool_use_id: 't1', content: 'failed', is_error: true },
+            { type: 'text' as const, text: 'after' },
+          ],
+        },
+      ],
+    };
+
+    expect(toAnthropic(fromAnthropic(conversation)).messages).toEqual(conversation.messages);
   });
 });

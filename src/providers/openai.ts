@@ -31,6 +31,12 @@ export function splitSystem(
 
   for (const message of messages) {
     if (isSystem(message)) {
+      if (typeof message.name === 'string') {
+        reporter.warn(
+          'dropped-metadata',
+          `${message.role} message name '${message.name}' has no top-level system prompt equivalent; dropped.`,
+        );
+      }
       if (started) {
         reporter.warn(
           'system-midstream',
