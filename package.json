@@ -74,7 +74,9 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepublishOnly": "npm run build",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "badges:downloads": "node scripts/update-download-badge.mjs",
+    "badges:downloads:check": "node scripts/update-download-badge.mjs --check"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
