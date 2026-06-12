@@ -21,7 +21,30 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: npm
       - run: npm ci
-      - run: npm run typecheck
-      - run: npm run lint
-      - run: npm test
+      - run: npm run check
+
+  runtime-node18:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
       - run: npm run build
+      - run: npm pack --pack-destination "$RUNNER_TEMP" --foreground-scripts=false
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 18
+      - name: Smoke packed package on Node 18
+        run: |
+          set -euo pipefail
+          mkdir "$RUNNER_TEMP/node18-consumer"
+          cd "$RUNNER_TEMP/node18-consumer"
+          npm init -y
+          npm install "$RUNNER_TEMP"/llm-messages-*.tgz --ignore-scripts
+          node --input-type=module -e "import assert from 'node:assert/strict'; import { normalizeResponse, warningCodes } from 'llm-messages'; assert.equal(typeof normalizeResponse, 'function'); assert.equal(Object.isFrozen(warningCodes), true);"
+          node -e "const assert = require('node:assert/strict'); const { normalizeResponse, warningCodes } = require('llm-messages'); assert.equal(typeof normalizeResponse, 'function'); assert.equal(Object.isFrozen(warningCodes), true);"
+          node node_modules/llm-messages/examples/usage.mjs --check
+          node node_modules/llm-messages/examples/commonjs.cjs

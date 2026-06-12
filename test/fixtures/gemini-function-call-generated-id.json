@@ -1,0 +1,39 @@
+{
+  "name": "gemini-function-call-generated-id",
+  "description": "Gemini functionCall blocks without usable ids generate deterministic canonical tool call ids and warnings.",
+  "source": "gemini",
+  "input": {
+    "contents": [
+      {
+        "role": "model",
+        "parts": [
+          {
+            "functionCall": {
+              "name": "lookup_order",
+              "args": {
+                "id": "ord_123"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "call_lookup_order_0",
+          "type": "function",
+          "function": {
+            "name": "lookup_order",
+            "arguments": "{\"id\":\"ord_123\"}"
+          }
+        }
+      ]
+    }
+  ],
+  "expectedWarningCodes": ["generated-id"]
+}

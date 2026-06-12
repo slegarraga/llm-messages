@@ -1,0 +1,58 @@
+{
+  "name": "openai-responses-unsupported-output-item",
+  "description": "OpenAI Responses API unsupported top-level output items are dropped with explicit warnings while supported message output remains.",
+  "source": "openai-responses",
+  "input": {
+    "object": "response",
+    "status": "completed",
+    "output": [
+      {
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "output_text",
+            "text": "Visible "
+          }
+        ]
+      },
+      {
+        "type": "reasoning",
+        "summary": [
+          {
+            "type": "summary_text",
+            "text": "provider-only"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "output_text",
+            "text": "answer"
+          }
+        ]
+      }
+    ],
+    "usage": {
+      "input_tokens": 4,
+      "output_tokens": 5
+    }
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": "Visible answer"
+    }
+  ],
+  "expectedResponse": {
+    "finishReason": "stop",
+    "usage": {
+      "inputTokens": 4,
+      "outputTokens": 5
+    }
+  },
+  "expectedWarningCodes": ["dropped-content"]
+}

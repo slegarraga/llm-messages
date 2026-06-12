@@ -15,11 +15,11 @@ fallback behavior matter.
 
    Public issue: https://github.com/slegarraga/llm-messages/issues/6
 
-2. **Live conformance fixtures**
+2. **Provider-backed fixture refreshes**
 
    Add provider-backed fixture generation for OpenAI, Anthropic and Gemini
-   payloads, keeping the committed test fixtures deterministic and safe to run
-   without API keys.
+   payloads, while keeping the committed conformance fixtures deterministic,
+   offline, and safe to run without API keys.
 
    Plan: [docs/conformance-fixtures.md](./docs/conformance-fixtures.md)
 

@@ -1,0 +1,71 @@
+{
+  "name": "gemini-function-response-unmapped-id",
+  "description": "Gemini functionResponse ids that do not match pending calls stay orphaned and do not consume same-name pending calls.",
+  "source": "gemini",
+  "input": {
+    "contents": [
+      {
+        "role": "model",
+        "parts": [
+          {
+            "functionCall": {
+              "id": "call_search",
+              "name": "search",
+              "args": {}
+            }
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "parts": [
+          {
+            "functionResponse": {
+              "id": "external_call",
+              "name": "search",
+              "response": {
+                "result": "external"
+              }
+            }
+          },
+          {
+            "functionResponse": {
+              "name": "search",
+              "response": {
+                "result": "matched"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "call_search",
+          "type": "function",
+          "function": {
+            "name": "search",
+            "arguments": "{}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "external_call",
+      "content": "external",
+      "name": "search"
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_search",
+      "content": "matched"
+    }
+  ],
+  "expectedWarningCodes": ["unmapped-tool-result"]
+}

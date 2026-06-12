@@ -7,7 +7,10 @@
 [![license](https://img.shields.io/npm/l/llm-messages.svg)](./LICENSE)
 [![zero dependencies](https://img.shields.io/badge/dependencies-0-brightgreen.svg)](./package.json)
 
-Convert chat conversations between **OpenAI**, **Anthropic** and **Gemini** message formats. Tool calls, system prompts and roles handled correctly. Zero dependencies.
+Convert chat conversations between **OpenAI**, **Anthropic** and **Gemini**
+message formats, and normalize provider responses into the same
+OpenAI-compatible assistant shape. Tool calls, system prompts, roles and
+response metadata handled correctly. Zero dependencies.
 
 Switching an agent from one provider to another (or running fallback across providers) means rewriting the whole conversation, and the differences are subtle enough to break at runtime:
 
@@ -15,7 +18,8 @@ Switching an agent from one provider to another (or running fallback across prov
 - The assistant role is `assistant` in OpenAI and Anthropic but `model` in Gemini.
 - Tool-call arguments are a **JSON string** in OpenAI but a **parsed object** in Anthropic and Gemini.
 - Tool results are a standalone `role: "tool"` message in OpenAI, a `tool_result` block inside a user turn in Anthropic, and a `functionResponse` part in Gemini.
-- Gemini matches tool calls to results **by function name**, while OpenAI and Anthropic use ids.
+- Gemini can match tool calls to results **by id when present** or by function
+  name when ids are omitted, while OpenAI and Anthropic require ids.
 - Anthropic and Gemini reject consecutive same-role turns; OpenAI does not.
 
 `llm-messages` handles all of it. Write the conversation once, send it to any provider.
@@ -28,13 +32,19 @@ npm install llm-messages
 
 Requires Node 18+. Ships ESM and CommonJS with full TypeScript types.
 
+CommonJS consumers can import the same package root:
+
+```js
+const { toAnthropic, toGemini } = require('llm-messages');
+```
+
 ## Quick start
 
 ```ts
-import { toAnthropic, toGemini } from 'llm-messages';
+import { toAnthropic, toGemini, type OpenAIMessage } from 'llm-messages';
 
 // A normal OpenAI Chat Completions conversation
-const messages = [
+const messages: OpenAIMessage[] = [
   { role: 'system', content: 'You are a weather assistant.' },
   { role: 'user', content: "What's the weather in Paris?" },
 ];
@@ -47,7 +57,9 @@ const gemini = toGemini(messages);
 //      contents: [{ role: 'user', parts: [{ text: "What's the weather in Paris?" }] }] }
 ```
 
-## The canonical hub
+## API
+
+### The canonical hub
 
 OpenAI Chat Completions is the canonical format. Every conversion routes through
 it, so you get a function for each direction:
@@ -67,12 +79,14 @@ convert(anthropicBody, { from: 'anthropic', to: 'gemini' });
 `convert` is fully typed: the input and output shapes are inferred from the
 `from` and `to` providers.
 
-## Tool calls round trip losslessly
+### Tool calls round trip losslessly
 
 The hard part is tool use, and it survives a full round trip unchanged:
 
 ```ts
-const messages = [
+import { fromGemini, toGemini, type OpenAIMessage } from 'llm-messages';
+
+const messages: OpenAIMessage[] = [
   {
     role: 'assistant',
     content: null,
@@ -87,16 +101,19 @@ fromGemini(toGemini(messages)); // deep-equals the original `messages`
 ```
 
 Arguments are parsed and re-serialized, ids are preserved (and regenerated
-deterministically when a Gemini payload omits them), and parallel tool results
-are grouped into the single user turn each provider expects. Anthropic
+deterministically when a Gemini payload does not provide a non-empty string id), and
+parallel tool results are grouped into the single user turn each provider expects. Anthropic
 `tool_result.is_error` is preserved as optional canonical tool-message metadata;
 standalone Gemini `functionResponse.name` is also preserved so orphaned tool
-results can be sent back to Gemini without renaming the function to the id.
+results can be sent back to Gemini without renaming the function to the id. When
+Anthropic includes `tool_result.tool_use_id` or Gemini includes
+`functionResponse.id`, it is matched before provider-specific fallback behavior.
 
-## Conversion report
+### Conversion report
 
-Conversions never throw on malformed input. Instead they make a deterministic
-choice and optionally report it, so you can surface or log what happened:
+When typed provider payloads contain malformed tool-call or media fields,
+conversions make a deterministic choice and optionally report it, so you can
+surface or log what happened:
 
 ```ts
 toGemini(messages, {
@@ -109,13 +126,22 @@ Warning codes: `generated-id`, `unmapped-tool-result`, `merged-role`,
 `system-midstream`, `gemini-url-image`, `gemini-url-media`,
 `unsupported-modality`.
 
-## Reading responses
+Consumers that validate fixture metadata or warning filters can import the same
+stable list from the package root as `warningCodes`.
+
+### Reading responses
 
 The same idea applies to the read side. Normalize a provider's response body into
 a canonical OpenAI assistant message, plus a neutral finish reason and token usage:
 
 ```ts
-import { responseFromAnthropic, responseFromOpenAIResponses, normalizeResponse } from 'llm-messages';
+import {
+  responseFromAnthropic,
+  responseFromGemini,
+  responseFromOpenAI,
+  responseFromOpenAIResponses,
+  normalizeResponse,
+} from 'llm-messages';
 
 const { message, finishReason, usage } = responseFromAnthropic(anthropicResponseBody);
 // message     -> { role: 'assistant', content, tool_calls? }  (tool input re-serialized to a JSON string)
@@ -126,6 +152,12 @@ const responses = responseFromOpenAIResponses(openaiResponsesBody);
 // OpenAI Responses API `output_text` items become assistant `content`.
 // `function_call` items become Chat Completions-compatible `tool_calls`.
 
+const chat = responseFromOpenAI(openaiChatBody);
+// Chat Completions `choices[0].message.tool_calls` stay Chat Completions-compatible.
+
+const gemini = responseFromGemini(geminiResponseBody);
+// Gemini `functionCall` parts become assistant `tool_calls`.
+
 // Or dispatch by provider:
 normalizeResponse(geminiResponseBody, { from: 'gemini' });
 normalizeResponse(openaiResponsesBody, { from: 'openai-responses' });
@@ -133,9 +165,10 @@ normalizeResponse(openaiResponsesBody, { from: 'openai-responses' });
 
 `finishReason` is normalized to `tool_calls` whenever the model called a tool, even
 for Gemini (which reports `STOP`) and Responses API bodies with `function_call`
-items. Gemini tool calls without an id get a deterministic one.
+items. OpenAI Chat Completions, OpenAI Responses, Anthropic and Gemini tool
+calls without a non-empty string id get a deterministic one.
 
-## Format cheatsheet
+### Format cheatsheet
 
 |                  | OpenAI                   | Anthropic                        | Gemini                          |
 | ---------------- | ------------------------ | -------------------------------- | ------------------------------- |
@@ -144,15 +177,17 @@ items. Gemini tool calls without an id get a deterministic one.
 | Tool call        | `tool_calls[].function`  | `tool_use` block                 | `functionCall` part             |
 | Call arguments   | JSON string              | object (`input`)                 | object (`args`)                 |
 | Tool result      | `role: "tool"` message   | `tool_result` block in user turn | `functionResponse` part in user |
-| Match key        | `tool_call_id`           | `tool_use_id`                    | function `name` (id optional)   |
+| Match key        | `tool_call_id`           | `tool_use_id`                    | `id` when present, else `name`  |
 | Role alternation | not required             | strict                           | strict                          |
 
-## Images, audio and documents
+### Images, audio and documents
 
 Image parts convert across all three providers:
 
 ```ts
-const messages = [
+import { toAnthropic, toGemini, type OpenAIMessage } from 'llm-messages';
+
+const messages: OpenAIMessage[] = [
   {
     role: 'user',
     content: [
@@ -162,8 +197,11 @@ const messages = [
   },
 ];
 
-toAnthropic(messages); // -> { type: 'image', source: { type: 'base64', media_type: 'image/png', data: '...' } }
-toGemini(messages); //    -> { inlineData: { mimeType: 'image/png', data: '...' } }
+toAnthropic(messages).messages[0]?.content;
+// -> [{ type: 'text', ... }, { type: 'image', source: { type: 'base64', media_type: 'image/png', data: '...' } }]
+
+toGemini(messages).contents[0]?.parts;
+// -> [{ text: 'What is in this image?' }, { inlineData: { mimeType: 'image/png', data: '...' } }]
 ```
 
 Base64 data URLs round trip losslessly. A remote `https` URL maps to an Anthropic
@@ -171,28 +209,35 @@ Base64 data URLs round trip losslessly. A remote `https` URL maps to an Anthropi
 `gemini-url-image` warning, since Gemini may require the Files API for non-Google
 URIs.
 
+If you need to handle image payloads directly, `parseDataUrl` and `toDataUrl`
+are exported for the same base64 data URL shape used by the converters.
+
 **Audio** (`input_audio`) and **documents** (`file`, e.g. PDF) convert too. Audio
 moves between OpenAI and Gemini; Anthropic has no audio input, so an audio part is
-dropped with an `unsupported-modality` warning. Documents convert across all three
-(OpenAI `file`, Anthropic `document`, Gemini `inlineData`).
+dropped with an `unsupported-modality` warning. Base64 document payloads convert
+across all three providers (OpenAI `file`, Anthropic `document`, Gemini
+`inlineData`). OpenAI `file_id` document references map to Anthropic `file`
+sources; Gemini has no equivalent and drops them with `unsupported-modality`.
 
 ## Scope
 
 Version 0.x covers text, system prompts, tool calls/results, images, audio and
-documents, which is the core of every agent loop. Unsupported parts are reported
-via `dropped-content` rather than failing. Provider-only fields are preserved
-only when the canonical OpenAI-compatible shape has an explicit optional
-metadata field for them, such as Anthropic `tool_result.is_error` and standalone
-Gemini `functionResponse.name`. When that metadata has no target-provider
-equivalent, conversion continues and reports `dropped-metadata`.
+documents, which is the core of every agent loop. Unsupported or lossy parts are
+reported through stable warning codes such as `dropped-content`,
+`unsupported-modality` or provider-specific media warnings rather than failing.
+Provider-only fields are preserved only when the canonical OpenAI-compatible
+shape has an explicit optional metadata field for them, such as Anthropic
+`tool_result.is_error` and standalone Gemini `functionResponse.name`. When that
+metadata has no target-provider equivalent, conversion continues and reports
+`dropped-metadata`.
 
 ## Roadmap
 
 See [ROADMAP.md](./ROADMAP.md) for current maintenance priorities, including
-OpenAI Responses API coverage, live conformance fixtures and tool-call edge
-cases. The [conformance fixtures plan](./docs/conformance-fixtures.md) describes
-how API credits should be used to refresh deterministic public fixtures without
-putting secrets in CI.
+OpenAI Responses API coverage, offline conformance fixtures and tool-call edge
+cases. The [conformance fixtures guide](./docs/conformance-fixtures.md)
+describes how API credits should be used to refresh deterministic public
+fixtures without putting secrets in CI.
 
 For teams evaluating the package, the
 [adoption guide](./docs/adoption-guide.md) covers the OpenAI-compatible boundary,

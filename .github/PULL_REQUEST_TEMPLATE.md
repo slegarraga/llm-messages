@@ -16,8 +16,7 @@
 ## Checklist
 
 - [ ] Tests added or updated for the change
-- [ ] `npm run typecheck` passes
-- [ ] `npm run lint` passes
-- [ ] `npm test` passes
-- [ ] `npm run build` passes
+- [ ] Conformance fixture inventory updated when fixtures changed
+- [ ] `npm run check` passes
+- [ ] Package-content changes were reviewed with `npm pack --dry-run`
 - [ ] Provider behaviour changes link to official documentation

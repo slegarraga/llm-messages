@@ -1,0 +1,53 @@
+{
+  "name": "gemini-function-call-duplicate-provider-id",
+  "description": "Gemini functionCall blocks with duplicate provider ids keep the first id and regenerate later duplicates.",
+  "source": "gemini",
+  "input": {
+    "contents": [
+      {
+        "role": "model",
+        "parts": [
+          {
+            "functionCall": {
+              "id": "call_search_0",
+              "name": "search",
+              "args": {}
+            }
+          },
+          {
+            "functionCall": {
+              "id": "call_search_0",
+              "name": "search",
+              "args": {}
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "call_search_0",
+          "type": "function",
+          "function": {
+            "name": "search",
+            "arguments": "{}"
+          }
+        },
+        {
+          "id": "call_search_1",
+          "type": "function",
+          "function": {
+            "name": "search",
+            "arguments": "{}"
+          }
+        }
+      ]
+    }
+  ],
+  "expectedWarningCodes": ["generated-id"]
+}

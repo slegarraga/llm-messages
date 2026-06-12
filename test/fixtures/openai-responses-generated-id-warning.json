@@ -1,0 +1,56 @@
+{
+  "name": "openai-responses-generated-id-warning",
+  "description": "OpenAI Responses API function_call items without call_id or id generate a deterministic tool call id and warning.",
+  "source": "openai-responses",
+  "input": {
+    "object": "response",
+    "status": "completed",
+    "output": [
+      {
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "output_text",
+            "text": "Checking order."
+          }
+        ]
+      },
+      {
+        "type": "function_call",
+        "name": "lookup_order",
+        "arguments": {
+          "id": "ord_123"
+        }
+      }
+    ],
+    "usage": {
+      "input_tokens": 11,
+      "output_tokens": 7
+    }
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": "Checking order.",
+      "tool_calls": [
+        {
+          "id": "call_lookup_order_0",
+          "type": "function",
+          "function": {
+            "name": "lookup_order",
+            "arguments": "{\"id\":\"ord_123\"}"
+          }
+        }
+      ]
+    }
+  ],
+  "expectedResponse": {
+    "finishReason": "tool_calls",
+    "usage": {
+      "inputTokens": 11,
+      "outputTokens": 7
+    }
+  },
+  "expectedWarningCodes": ["generated-id"]
+}

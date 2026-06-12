@@ -1,0 +1,35 @@
+{
+  "name": "openai-chat-refusal-content-part",
+  "description": "OpenAI Chat Completions refusal content parts flatten into canonical assistant text without warning.",
+  "source": "openai",
+  "input": {
+    "choices": [
+      {
+        "message": {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "refusal",
+              "refusal": "I cannot help with that."
+            }
+          ]
+        },
+        "finish_reason": "content_filter"
+      }
+    ]
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": "I cannot help with that."
+    }
+  ],
+  "expectedResponse": {
+    "finishReason": "content_filter",
+    "usage": {
+      "inputTokens": 0,
+      "outputTokens": 0
+    }
+  },
+  "expectedWarningCodes": []
+}

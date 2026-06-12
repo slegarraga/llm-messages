@@ -1,37 +1,38 @@
 name: Bug report
-description: Report a conversion that produces the wrong output
+description: Report a conversion or response normalization that produces the wrong output
 labels: ['bug']
 body:
   - type: markdown
     attributes:
-      value: Thanks for the report. A minimal reproduction makes a bug fixable.
+      value: Thanks for the report. A minimal input payload makes a bug fixable.
   - type: input
     id: version
     attributes:
       label: Version
       description: Which version of llm-messages?
-      placeholder: 0.1.0
+      placeholder: 0.5.2
     validations:
       required: true
   - type: dropdown
     id: direction
     attributes:
-      label: Conversion
-      description: Which direction is affected?
+      label: Affected path
+      description: Which conversion or normalizer is affected?
       options:
         - openai -> anthropic
         - openai -> gemini
         - anthropic -> openai
         - gemini -> openai
         - convert() between two providers
+        - response normalization
         - other
     validations:
       required: true
   - type: textarea
     id: input
     attributes:
-      label: Input conversation
-      description: The conversation you passed in.
+      label: Input payload
+      description: The conversation or response body you passed in.
       render: json
     validations:
       required: true

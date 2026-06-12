@@ -1,0 +1,55 @@
+{
+  "name": "openai-responses-duplicate-provider-id",
+  "description": "OpenAI Responses API function_call items with duplicate provider ids keep the first id and regenerate later duplicates.",
+  "source": "openai-responses",
+  "input": {
+    "object": "response",
+    "status": "completed",
+    "output": [
+      {
+        "type": "function_call",
+        "call_id": "call_search_0",
+        "name": "search",
+        "arguments": "{}"
+      },
+      {
+        "type": "function_call",
+        "call_id": "call_search_0",
+        "name": "search",
+        "arguments": "{}"
+      }
+    ]
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "call_search_0",
+          "type": "function",
+          "function": {
+            "name": "search",
+            "arguments": "{}"
+          }
+        },
+        {
+          "id": "call_search_1",
+          "type": "function",
+          "function": {
+            "name": "search",
+            "arguments": "{}"
+          }
+        }
+      ]
+    }
+  ],
+  "expectedResponse": {
+    "finishReason": "tool_calls",
+    "usage": {
+      "inputTokens": 0,
+      "outputTokens": 0
+    }
+  },
+  "expectedWarningCodes": ["generated-id"]
+}

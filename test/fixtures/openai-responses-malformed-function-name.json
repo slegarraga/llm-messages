@@ -1,0 +1,41 @@
+{
+  "name": "openai-responses-malformed-function-name",
+  "description": "OpenAI Responses API function_call items with malformed names use the stable fallback function name and warning.",
+  "source": "openai-responses",
+  "input": {
+    "object": "response",
+    "status": "completed",
+    "output": [
+      {
+        "type": "function_call",
+        "call_id": "call_bad_name",
+        "name": "lookup.order",
+        "arguments": "{}"
+      }
+    ]
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "call_bad_name",
+          "type": "function",
+          "function": {
+            "name": "unknown_function",
+            "arguments": "{}"
+          }
+        }
+      ]
+    }
+  ],
+  "expectedResponse": {
+    "finishReason": "tool_calls",
+    "usage": {
+      "inputTokens": 0,
+      "outputTokens": 0
+    }
+  },
+  "expectedWarningCodes": ["dropped-metadata"]
+}

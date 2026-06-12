@@ -1,0 +1,88 @@
+{
+  "name": "gemini-function-response-duplicate-provider-id-omitted-name",
+  "description": "Gemini functionResponse blocks with repeated provider ids can omit names and still resolve in occurrence order after regeneration.",
+  "source": "gemini",
+  "input": {
+    "contents": [
+      {
+        "role": "model",
+        "parts": [
+          {
+            "functionCall": {
+              "id": "call_search_0",
+              "name": "search",
+              "args": {
+                "q": "one"
+              }
+            }
+          },
+          {
+            "functionCall": {
+              "id": "call_search_0",
+              "name": "search",
+              "args": {
+                "q": "two"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "parts": [
+          {
+            "functionResponse": {
+              "id": "call_search_0",
+              "response": {
+                "result": "first"
+              }
+            }
+          },
+          {
+            "functionResponse": {
+              "id": "call_search_0",
+              "response": {
+                "result": "second"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "call_search_0",
+          "type": "function",
+          "function": {
+            "name": "search",
+            "arguments": "{\"q\":\"one\"}"
+          }
+        },
+        {
+          "id": "call_search_1",
+          "type": "function",
+          "function": {
+            "name": "search",
+            "arguments": "{\"q\":\"two\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_search_0",
+      "content": "first"
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_search_1",
+      "content": "second"
+    }
+  ],
+  "expectedWarningCodes": ["generated-id"]
+}

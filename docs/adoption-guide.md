@@ -18,6 +18,13 @@ Use it when you need:
 npm install llm-messages
 ```
 
+The package targets Node 18+ and ships ESM, CommonJS, and TypeScript types.
+CommonJS consumers use the same package root:
+
+```js
+const { convert, toAnthropic, toGemini } = require('llm-messages');
+```
+
 ```ts
 import { convert, toAnthropic, toGemini } from 'llm-messages';
 

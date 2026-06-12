@@ -1,0 +1,35 @@
+{
+  "name": "openai-responses-refusal-content-part",
+  "description": "OpenAI Responses API refusal content parts flatten into canonical assistant text without warning.",
+  "source": "openai-responses",
+  "input": {
+    "object": "response",
+    "status": "completed",
+    "output": [
+      {
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "refusal",
+            "refusal": "I cannot help with that."
+          }
+        ]
+      }
+    ]
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": "I cannot help with that."
+    }
+  ],
+  "expectedResponse": {
+    "finishReason": "stop",
+    "usage": {
+      "inputTokens": 0,
+      "outputTokens": 0
+    }
+  },
+  "expectedWarningCodes": []
+}

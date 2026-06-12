@@ -1,0 +1,55 @@
+{
+  "name": "openai-chat-generated-id-warning",
+  "description": "OpenAI Chat Completions tool_calls without ids generate deterministic canonical tool call ids and warnings.",
+  "source": "openai",
+  "input": {
+    "choices": [
+      {
+        "message": {
+          "role": "assistant",
+          "content": "Checking order.",
+          "tool_calls": [
+            {
+              "type": "function",
+              "function": {
+                "name": "lookup_order",
+                "arguments": {
+                  "id": "ord_123"
+                }
+              }
+            }
+          ]
+        },
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 11,
+      "completion_tokens": 7
+    }
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": "Checking order.",
+      "tool_calls": [
+        {
+          "id": "call_lookup_order_0",
+          "type": "function",
+          "function": {
+            "name": "lookup_order",
+            "arguments": "{\"id\":\"ord_123\"}"
+          }
+        }
+      ]
+    }
+  ],
+  "expectedResponse": {
+    "finishReason": "tool_calls",
+    "usage": {
+      "inputTokens": 11,
+      "outputTokens": 7
+    }
+  },
+  "expectedWarningCodes": ["generated-id"]
+}

@@ -1,0 +1,41 @@
+{
+  "name": "openai-responses-invalid-arguments",
+  "description": "OpenAI Responses API function_call arguments that are explicit non-object values fall back to empty canonical arguments.",
+  "source": "openai-responses",
+  "input": {
+    "object": "response",
+    "status": "completed",
+    "output": [
+      {
+        "type": "function_call",
+        "call_id": "call_lookup",
+        "name": "lookup_order",
+        "arguments": ["bad"]
+      }
+    ]
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "call_lookup",
+          "type": "function",
+          "function": {
+            "name": "lookup_order",
+            "arguments": "{}"
+          }
+        }
+      ]
+    }
+  ],
+  "expectedResponse": {
+    "finishReason": "tool_calls",
+    "usage": {
+      "inputTokens": 0,
+      "outputTokens": 0
+    }
+  },
+  "expectedWarningCodes": ["invalid-json-arguments"]
+}

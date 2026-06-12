@@ -1,0 +1,60 @@
+{
+  "name": "anthropic-response-tool-use-duplicate-provider-id",
+  "description": "Anthropic response-level tool_use blocks with duplicate provider ids keep the first id and regenerate later duplicates.",
+  "source": "anthropic-response",
+  "input": {
+    "type": "message",
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_lookup_0",
+        "name": "lookup",
+        "input": {
+          "q": "one"
+        }
+      },
+      {
+        "type": "tool_use",
+        "id": "call_lookup_0",
+        "name": "lookup",
+        "input": {
+          "q": "two"
+        }
+      }
+    ],
+    "stop_reason": "tool_use"
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "call_lookup_0",
+          "type": "function",
+          "function": {
+            "name": "lookup",
+            "arguments": "{\"q\":\"one\"}"
+          }
+        },
+        {
+          "id": "call_lookup_1",
+          "type": "function",
+          "function": {
+            "name": "lookup",
+            "arguments": "{\"q\":\"two\"}"
+          }
+        }
+      ]
+    }
+  ],
+  "expectedResponse": {
+    "finishReason": "tool_calls",
+    "usage": {
+      "inputTokens": 0,
+      "outputTokens": 0
+    }
+  },
+  "expectedWarningCodes": ["generated-id"]
+}

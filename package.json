@@ -1,6 +1,6 @@
 {
   "name": "llm-messages",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Convert chat conversations and responses between OpenAI, Anthropic and Gemini. Tool calls, images, audio, documents and roles handled. Zero dependencies.",
   "keywords": [
     "openai",
@@ -58,22 +58,28 @@
     "examples",
     "README.md",
     "ROADMAP.md",
+    "SECURITY.md",
     "LICENSE",
     "CHANGELOG.md"
   ],
   "engines": {
     "node": ">=18"
   },
+  "packageManager": "npm@10.9.8",
   "sideEffects": false,
   "scripts": {
     "build": "tsup",
+    "check": "npm run format:check && npm run typecheck && npm run lint && npm test && npm run build && npm run examples:check && npm run pack:check && npm run pack:smoke",
+    "examples:check": "node examples/usage.mjs --check && node examples/commonjs.cjs",
+    "pack:check": "npm pack --dry-run --foreground-scripts=false",
+    "pack:smoke": "node scripts/pack-smoke.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepublishOnly": "npm run build",
+    "prepublishOnly": "npm run check",
     "prepare": "npm run build",
     "badges:downloads": "node scripts/update-download-badge.mjs",
     "badges:downloads:check": "node scripts/update-download-badge.mjs --check"

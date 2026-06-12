@@ -1,0 +1,80 @@
+{
+  "name": "anthropic-tool-result-duplicate-provider-id",
+  "description": "Anthropic tool_result blocks with repeated provider ids map to duplicate tool_use ids in occurrence order after regeneration.",
+  "source": "anthropic",
+  "input": {
+    "messages": [
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "call_lookup_0",
+            "name": "lookup",
+            "input": {
+              "q": "one"
+            }
+          },
+          {
+            "type": "tool_use",
+            "id": "call_lookup_0",
+            "name": "lookup",
+            "input": {
+              "q": "two"
+            }
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "tool_result",
+            "tool_use_id": "call_lookup_0",
+            "content": "first"
+          },
+          {
+            "type": "tool_result",
+            "tool_use_id": "call_lookup_0",
+            "content": "second"
+          }
+        ]
+      }
+    ]
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "call_lookup_0",
+          "type": "function",
+          "function": {
+            "name": "lookup",
+            "arguments": "{\"q\":\"one\"}"
+          }
+        },
+        {
+          "id": "call_lookup_1",
+          "type": "function",
+          "function": {
+            "name": "lookup",
+            "arguments": "{\"q\":\"two\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_lookup_0",
+      "content": "first"
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_lookup_1",
+      "content": "second"
+    }
+  ],
+  "expectedWarningCodes": ["generated-id"]
+}

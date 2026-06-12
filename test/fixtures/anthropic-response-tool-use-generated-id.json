@@ -1,0 +1,67 @@
+{
+  "name": "anthropic-response-tool-use-generated-id",
+  "description": "Anthropic response-level tool_use blocks without usable ids generate deterministic canonical tool call ids and warnings.",
+  "source": "anthropic-response",
+  "input": {
+    "type": "message",
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "Checking order."
+      },
+      {
+        "type": "tool_use",
+        "name": "lookup_order",
+        "input": {
+          "id": "ord_123"
+        }
+      },
+      {
+        "type": "tool_use",
+        "id": "",
+        "name": "search",
+        "input": {
+          "q": "weather"
+        }
+      }
+    ],
+    "stop_reason": "tool_use",
+    "usage": {
+      "input_tokens": 11,
+      "output_tokens": 7
+    }
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": "Checking order.",
+      "tool_calls": [
+        {
+          "id": "call_lookup_order_0",
+          "type": "function",
+          "function": {
+            "name": "lookup_order",
+            "arguments": "{\"id\":\"ord_123\"}"
+          }
+        },
+        {
+          "id": "call_search_1",
+          "type": "function",
+          "function": {
+            "name": "search",
+            "arguments": "{\"q\":\"weather\"}"
+          }
+        }
+      ]
+    }
+  ],
+  "expectedResponse": {
+    "finishReason": "tool_calls",
+    "usage": {
+      "inputTokens": 11,
+      "outputTokens": 7
+    }
+  },
+  "expectedWarningCodes": ["generated-id", "generated-id"]
+}

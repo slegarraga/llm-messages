@@ -21,7 +21,7 @@ describe('audio', () => {
   it('drops audio for Anthropic with a warning', () => {
     const warnings: Warning[] = [];
     const { messages } = toAnthropic(audioMsg, { onWarning: (w) => warnings.push(w) });
-    expect(messages[0].content).toEqual([]);
+    expect(messages[0].content).toBe('');
     expect(warnings.some((w) => w.code === 'unsupported-modality')).toBe(true);
   });
 });
@@ -51,5 +51,49 @@ describe('document', () => {
       type: 'document',
       source: { type: 'file', file_id: 'file_123' },
     });
+  });
+
+  it('drops an OpenAI file_id for Gemini with a warning', () => {
+    const warnings: Warning[] = [];
+    const m: OpenAIMessage[] = [{ role: 'user', content: [{ type: 'file', file: { file_id: 'file_123' } }] }];
+    const { contents } = toGemini(m, { onWarning: (w) => warnings.push(w) });
+    expect(contents[0].parts).toEqual([{ text: '' }]);
+    expect(warnings.map((w) => w.code)).toEqual(['unsupported-modality']);
+  });
+
+  it('warns and preserves an empty user turn for Anthropic document URLs', () => {
+    const warnings: Warning[] = [];
+    const out = fromAnthropic(
+      {
+        messages: [
+          {
+            role: 'user',
+            content: [{ type: 'document', source: { type: 'url', url: 'https://example.com/report.pdf' } }],
+          },
+        ],
+      },
+      { onWarning: (w) => warnings.push(w) },
+    );
+
+    expect(out).toEqual([{ role: 'user', content: '' }]);
+    expect(warnings.map((w) => w.code)).toEqual(['dropped-content']);
+  });
+
+  it('warns and preserves an empty user turn for Gemini document URLs', () => {
+    const warnings: Warning[] = [];
+    const out = fromGemini(
+      {
+        contents: [
+          {
+            role: 'user',
+            parts: [{ fileData: { mimeType: 'application/pdf', fileUri: 'https://example.com/report.pdf' } }],
+          },
+        ],
+      },
+      { onWarning: (w) => warnings.push(w) },
+    );
+
+    expect(out).toEqual([{ role: 'user', content: '' }]);
+    expect(warnings.map((w) => w.code)).toEqual(['dropped-content']);
   });
 });

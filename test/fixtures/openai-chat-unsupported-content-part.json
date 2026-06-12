@@ -1,0 +1,49 @@
+{
+  "name": "openai-chat-unsupported-content-part",
+  "description": "OpenAI Chat Completions unsupported response content parts are dropped with explicit warnings while supported text remains.",
+  "source": "openai",
+  "input": {
+    "choices": [
+      {
+        "message": {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "Hello "
+            },
+            {
+              "type": "image_url",
+              "image_url": {
+                "url": "https://example.com/chart.png"
+              }
+            },
+            {
+              "type": "text",
+              "text": "world"
+            }
+          ]
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 2,
+      "completion_tokens": 3
+    }
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": "Hello world"
+    }
+  ],
+  "expectedResponse": {
+    "finishReason": "stop",
+    "usage": {
+      "inputTokens": 2,
+      "outputTokens": 3
+    }
+  },
+  "expectedWarningCodes": ["dropped-content"]
+}

@@ -1,0 +1,44 @@
+{
+  "name": "openai-chat-legacy-function-call-invalid-arguments",
+  "description": "Legacy OpenAI Chat Completions function_call argument strings that decode to non-objects fall back to empty canonical arguments.",
+  "source": "openai",
+  "input": {
+    "choices": [
+      {
+        "message": {
+          "role": "assistant",
+          "content": null,
+          "function_call": {
+            "name": "lookup_order",
+            "arguments": "[\"bad\"]"
+          }
+        },
+        "finish_reason": "function_call"
+      }
+    ]
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "call_lookup_order_0",
+          "type": "function",
+          "function": {
+            "name": "lookup_order",
+            "arguments": "{}"
+          }
+        }
+      ]
+    }
+  ],
+  "expectedResponse": {
+    "finishReason": "tool_calls",
+    "usage": {
+      "inputTokens": 0,
+      "outputTokens": 0
+    }
+  },
+  "expectedWarningCodes": ["generated-id", "invalid-json-arguments"]
+}

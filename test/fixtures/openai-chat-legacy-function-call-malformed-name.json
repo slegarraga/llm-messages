@@ -1,0 +1,44 @@
+{
+  "name": "openai-chat-legacy-function-call-malformed-name",
+  "description": "Legacy OpenAI Chat Completions function_call responses with malformed names fall back before generating canonical ids.",
+  "source": "openai",
+  "input": {
+    "choices": [
+      {
+        "message": {
+          "role": "assistant",
+          "content": null,
+          "function_call": {
+            "name": "lookup.order",
+            "arguments": "{}"
+          }
+        },
+        "finish_reason": "function_call"
+      }
+    ]
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "call_unknown_function_0",
+          "type": "function",
+          "function": {
+            "name": "unknown_function",
+            "arguments": "{}"
+          }
+        }
+      ]
+    }
+  ],
+  "expectedResponse": {
+    "finishReason": "tool_calls",
+    "usage": {
+      "inputTokens": 0,
+      "outputTokens": 0
+    }
+  },
+  "expectedWarningCodes": ["dropped-metadata", "generated-id"]
+}

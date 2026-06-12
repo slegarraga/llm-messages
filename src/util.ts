@@ -24,6 +24,7 @@ export function textOf(content: unknown): string {
       .map((part) => {
         if (typeof part === 'string') return part;
         if (isRecord(part) && typeof part.text === 'string') return part.text;
+        if (isRecord(part) && part.type === 'refusal' && typeof part.refusal === 'string') return part.refusal;
         return '';
       })
       .join('');
@@ -59,6 +60,80 @@ export function parseArguments(args: string, reporter: Reporter, fnName: string)
   return {};
 }
 
+/** Serializes provider-native argument objects into the canonical OpenAI JSON string. */
+export function stringifyArgumentsObject(
+  value: unknown,
+  reporter: Reporter,
+  provider: string,
+  part: string,
+  fnName: string,
+): string {
+  if (value === undefined) return '{}';
+  if (isRecord(value)) {
+    try {
+      return JSON.stringify(value);
+    } catch {
+      reporter.warn(
+        'invalid-json-arguments',
+        `${provider} ${part} '${fnName}' had arguments that could not be serialized as JSON; used an empty object instead.`,
+      );
+      return '{}';
+    }
+  }
+  reporter.warn(
+    'invalid-json-arguments',
+    `${provider} ${part} '${fnName}' had arguments that were not an object; used an empty object instead.`,
+  );
+  return '{}';
+}
+
+const OPENAI_FUNCTION_NAME = /^[a-zA-Z0-9_-]{1,64}$/;
+
+export function isProviderFunctionName(value: unknown): value is string {
+  return typeof value === 'string' && OPENAI_FUNCTION_NAME.test(value);
+}
+
+/** Returns a canonical function name for malformed provider tool-call payloads. */
+export function providerFunctionName(value: unknown, reporter: Reporter, provider: string, part: string): string {
+  if (isProviderFunctionName(value)) return value;
+  reporter.warn(
+    'dropped-metadata',
+    `${provider} ${part} had a missing or invalid function name; used 'unknown_function'.`,
+  );
+  return 'unknown_function';
+}
+
+/** Generates deterministic OpenAI tool-call ids without reusing seen ids. */
+export function createToolCallIdGenerator(reservedIds: Iterable<string> = []): {
+  claim: (id: string, name: string) => string;
+  generate: (name: string) => string;
+} {
+  const reserved = new Set(reservedIds);
+  const used = new Set<string>();
+  let counter = 0;
+
+  const generate = (name: string): string => {
+    let id: string;
+    do {
+      id = `call_${name.replace(/[^a-zA-Z0-9_-]/g, '_')}_${counter++}`;
+    } while (used.has(id) || reserved.has(id));
+    used.add(id);
+    return id;
+  };
+
+  return {
+    claim(id: string, name: string): string {
+      if (used.has(id)) return generate(name);
+      used.add(id);
+      reserved.delete(id);
+      return id;
+    },
+    generate(name: string): string {
+      return generate(name);
+    },
+  };
+}
+
 /**
  * Converts an OpenAI tool result string into a Gemini `functionResponse.response`
  * object. A JSON object string is used directly; anything else is wrapped as
@@ -71,10 +146,26 @@ export function wrapResponse(content: string): Record<string, unknown> {
 }
 
 /** Reverses {@link wrapResponse}: a lone `{ result: string }` becomes that string. */
-export function unwrapResponse(response: Record<string, unknown>): string {
-  const keys = Object.keys(response);
-  if (keys.length === 1 && keys[0] === 'result' && typeof response.result === 'string') {
-    return response.result;
+export function unwrapResponse(
+  response: unknown,
+  reporter?: Reporter,
+  provider = 'Provider',
+  part = 'response',
+): string {
+  if (response === undefined) return '{}';
+  if (isRecord(response)) {
+    const keys = Object.keys(response);
+    if (keys.length === 1 && keys[0] === 'result' && typeof response.result === 'string') {
+      return response.result;
+    }
   }
-  return JSON.stringify(response);
+  try {
+    return JSON.stringify(response) ?? '{}';
+  } catch {
+    reporter?.warn(
+      'dropped-content',
+      `${provider} ${part} response could not be serialized as JSON; used an empty object instead.`,
+    );
+    return '{}';
+  }
 }

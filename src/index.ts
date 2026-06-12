@@ -13,6 +13,7 @@ export {
   normalizeResponse,
 } from './response.js';
 export type { NormalizedResponse, FinishReason, Usage, ResponseProvider } from './response.js';
+export { warningCodes } from './types.js';
 
 export type {
   Provider,

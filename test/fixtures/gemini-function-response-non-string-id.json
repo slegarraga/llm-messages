@@ -1,0 +1,57 @@
+{
+  "name": "gemini-function-response-non-string-id",
+  "description": "Gemini functionResponse ids that are not strings are ignored before matching by function name.",
+  "source": "gemini",
+  "input": {
+    "contents": [
+      {
+        "role": "model",
+        "parts": [
+          {
+            "functionCall": {
+              "id": "call_search",
+              "name": "search",
+              "args": {}
+            }
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "parts": [
+          {
+            "functionResponse": {
+              "id": 123,
+              "name": "search",
+              "response": {
+                "result": "done"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "call_search",
+          "type": "function",
+          "function": {
+            "name": "search",
+            "arguments": "{}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_search",
+      "content": "done"
+    }
+  ],
+  "expectedWarningCodes": ["dropped-metadata"]
+}

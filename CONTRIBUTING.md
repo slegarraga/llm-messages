@@ -6,6 +6,12 @@ and correctness over breadth.
 
 ## Getting started
 
+The published package supports Node 18+ at runtime. The local development
+toolchain currently needs Node 20.19+ or Node 22.13+ because the lint, test and
+build dependencies follow those active Node release lines. CI keeps the runtime
+floor honest by installing the packed tarball in a separate Node 18 consumer
+smoke.
+
 ```sh
 git clone https://github.com/slegarraga/llm-messages.git
 cd llm-messages
@@ -17,22 +23,52 @@ npm install
 Every change should keep the full check suite green:
 
 ```sh
+npm run check        # full validation suite
+```
+
+That script runs the same checks individually listed here:
+
+```sh
+npm run format:check # prettier --check
 npm run typecheck   # tsc --noEmit
 npm run lint        # eslint
 npm test            # vitest
 npm run build       # tsup (ESM + CJS + types)
-npm run format      # prettier --write
+npm run examples:check # smoke-test packaged ESM/CommonJS examples
+npm run pack:check  # npm pack --dry-run, with lifecycle output quieted
+npm run pack:smoke  # install the packed tarball and verify runtime/types usage
 ```
 
-Run `npm run test:watch` while developing.
+Run `npm run test:watch` and `npm run format` while developing.
+
+## Release and staging review
+
+Before staging release, fixture, package metadata or published-file changes,
+review the complete worktree, including untracked files:
+
+```sh
+git status --short -uall
+git diff --stat
+npm run check
+npm pack --dry-run --foreground-scripts=false
+```
+
+Confirm that new fixtures, examples and scripts are intentional, and that no
+private source, test, script, config or generated files are included in the
+package dry-run output. Do not publish from a dirty tree whose untracked files
+have not been reviewed.
 
 ## Pull requests
 
 1. Fork the repo and create a branch from `main` (e.g. `fix/gemini-id-matching`).
 2. Add or update tests. New behaviour without a test will not be merged.
-3. Make sure `typecheck`, `lint`, `test` and `build` all pass.
-4. Keep the public API surface small and documented with JSDoc.
-5. Open a pull request and fill in the template.
+3. When adding conformance fixtures, update `docs/conformance-fixtures.md`
+   in the same change so the fixture inventory stays reviewable and the
+   offline harness remains deterministic.
+4. Make sure `format:check`, `typecheck`, `lint`, `test`, `build`,
+   `examples:check`, `pack:check` and `pack:smoke` all pass.
+5. Keep the public API surface small and documented with JSDoc.
+6. Open a pull request and fill in the template.
 
 ## Commit messages
 

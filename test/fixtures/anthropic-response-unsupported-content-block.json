@@ -1,0 +1,40 @@
+{
+  "name": "anthropic-response-unsupported-content-block",
+  "description": "Anthropic response-level unsupported content blocks are dropped with explicit warnings while supported text remains.",
+  "source": "anthropic-response",
+  "input": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Hello "
+      },
+      {
+        "type": "thinking",
+        "thinking": "internal provider-only block"
+      },
+      {
+        "type": "text",
+        "text": "world"
+      }
+    ],
+    "stop_reason": "end_turn",
+    "usage": {
+      "input_tokens": 2,
+      "output_tokens": 3
+    }
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": "Hello world"
+    }
+  ],
+  "expectedResponse": {
+    "finishReason": "stop",
+    "usage": {
+      "inputTokens": 2,
+      "outputTokens": 3
+    }
+  },
+  "expectedWarningCodes": ["dropped-content"]
+}

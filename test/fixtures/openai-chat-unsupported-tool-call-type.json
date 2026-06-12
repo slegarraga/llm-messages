@@ -1,0 +1,54 @@
+{
+  "name": "openai-chat-unsupported-tool-call-type",
+  "description": "OpenAI Chat Completions unsupported tool_calls[] types are dropped while supported function calls remain.",
+  "source": "openai",
+  "input": {
+    "choices": [
+      {
+        "message": {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "call_file_search",
+              "type": "file_search"
+            },
+            {
+              "id": "call_lookup",
+              "type": "function",
+              "function": {
+                "name": "lookup_order",
+                "arguments": "{\"id\":\"ord_123\"}"
+              }
+            }
+          ]
+        },
+        "finish_reason": "tool_calls"
+      }
+    ]
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "call_lookup",
+          "type": "function",
+          "function": {
+            "name": "lookup_order",
+            "arguments": "{\"id\":\"ord_123\"}"
+          }
+        }
+      ]
+    }
+  ],
+  "expectedResponse": {
+    "finishReason": "tool_calls",
+    "usage": {
+      "inputTokens": 0,
+      "outputTokens": 0
+    }
+  },
+  "expectedWarningCodes": ["dropped-content"]
+}

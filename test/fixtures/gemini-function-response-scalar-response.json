@@ -1,0 +1,55 @@
+{
+  "name": "gemini-function-response-scalar-response",
+  "description": "Gemini functionResponse scalar response payloads serialize into canonical tool-message content without crashing.",
+  "source": "gemini",
+  "input": {
+    "contents": [
+      {
+        "role": "model",
+        "parts": [
+          {
+            "functionCall": {
+              "id": "call_lookup",
+              "name": "lookup_order",
+              "args": {}
+            }
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "parts": [
+          {
+            "functionResponse": {
+              "id": "call_lookup",
+              "name": "lookup_order",
+              "response": "done"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "call_lookup",
+          "type": "function",
+          "function": {
+            "name": "lookup_order",
+            "arguments": "{}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_lookup",
+      "content": "\"done\""
+    }
+  ],
+  "expectedWarningCodes": []
+}

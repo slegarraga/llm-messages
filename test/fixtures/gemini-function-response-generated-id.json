@@ -1,0 +1,31 @@
+{
+  "name": "gemini-function-response-generated-id",
+  "description": "Gemini functionResponse blocks without a matching call or id generate deterministic canonical tool-message ids.",
+  "source": "gemini",
+  "input": {
+    "contents": [
+      {
+        "role": "user",
+        "parts": [
+          {
+            "functionResponse": {
+              "name": "lookup_order",
+              "response": {
+                "result": "done"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "expectedOpenAI": [
+    {
+      "role": "tool",
+      "tool_call_id": "call_lookup_order_0",
+      "content": "done",
+      "name": "lookup_order"
+    }
+  ],
+  "expectedWarningCodes": ["unmapped-tool-result"]
+}

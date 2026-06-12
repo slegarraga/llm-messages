@@ -1,0 +1,44 @@
+{
+  "name": "anthropic-response-tool-use-malformed-name",
+  "description": "Anthropic response-level tool_use blocks with malformed names use the stable fallback function name and warning.",
+  "source": "anthropic-response",
+  "input": {
+    "type": "message",
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "toolu_1",
+        "name": null,
+        "input": {
+          "ok": true
+        }
+      }
+    ],
+    "stop_reason": "tool_use"
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "toolu_1",
+          "type": "function",
+          "function": {
+            "name": "unknown_function",
+            "arguments": "{\"ok\":true}"
+          }
+        }
+      ]
+    }
+  ],
+  "expectedResponse": {
+    "finishReason": "tool_calls",
+    "usage": {
+      "inputTokens": 0,
+      "outputTokens": 0
+    }
+  },
+  "expectedWarningCodes": ["dropped-metadata"]
+}

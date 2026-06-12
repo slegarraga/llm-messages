@@ -1,0 +1,51 @@
+{
+  "name": "openai-chat-malformed-function-name",
+  "description": "OpenAI Chat Completions tool_calls with malformed function names use the stable fallback function name and warning.",
+  "source": "openai",
+  "input": {
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "call_bad_name",
+              "type": "function",
+              "function": {
+                "name": "lookup.order",
+                "arguments": "{}"
+              }
+            }
+          ]
+        },
+        "finish_reason": "tool_calls"
+      }
+    ]
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "call_bad_name",
+          "type": "function",
+          "function": {
+            "name": "unknown_function",
+            "arguments": "{}"
+          }
+        }
+      ]
+    }
+  ],
+  "expectedResponse": {
+    "finishReason": "tool_calls",
+    "usage": {
+      "inputTokens": 0,
+      "outputTokens": 0
+    }
+  },
+  "expectedWarningCodes": ["dropped-metadata"]
+}

@@ -1,0 +1,51 @@
+{
+  "name": "openai-chat-malformed-tool-call",
+  "description": "OpenAI Chat Completions malformed tool_calls[] entries are dropped with explicit warnings while supported function calls remain.",
+  "source": "openai",
+  "input": {
+    "choices": [
+      {
+        "message": {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            null,
+            {
+              "id": "call_lookup",
+              "type": "function",
+              "function": {
+                "name": "lookup_order",
+                "arguments": "{\"id\":\"ord_123\"}"
+              }
+            }
+          ]
+        },
+        "finish_reason": "tool_calls"
+      }
+    ]
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "call_lookup",
+          "type": "function",
+          "function": {
+            "name": "lookup_order",
+            "arguments": "{\"id\":\"ord_123\"}"
+          }
+        }
+      ]
+    }
+  ],
+  "expectedResponse": {
+    "finishReason": "tool_calls",
+    "usage": {
+      "inputTokens": 0,
+      "outputTokens": 0
+    }
+  },
+  "expectedWarningCodes": ["dropped-content"]
+}

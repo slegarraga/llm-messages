@@ -1,0 +1,85 @@
+{
+  "name": "gemini-function-response-id-precedence",
+  "description": "Gemini functionResponse.id is resolved before falling back to same-name pending function calls.",
+  "source": "gemini",
+  "input": {
+    "contents": [
+      {
+        "role": "model",
+        "parts": [
+          {
+            "functionCall": {
+              "id": "call_search",
+              "name": "search",
+              "args": {}
+            }
+          },
+          {
+            "functionCall": {
+              "id": "call_lookup",
+              "name": "lookup_order",
+              "args": {}
+            }
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "parts": [
+          {
+            "functionResponse": {
+              "id": "call_lookup",
+              "name": "search",
+              "response": {
+                "result": "lookup"
+              }
+            }
+          },
+          {
+            "functionResponse": {
+              "name": "search",
+              "response": {
+                "result": "search"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "call_search",
+          "type": "function",
+          "function": {
+            "name": "search",
+            "arguments": "{}"
+          }
+        },
+        {
+          "id": "call_lookup",
+          "type": "function",
+          "function": {
+            "name": "lookup_order",
+            "arguments": "{}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_lookup",
+      "content": "lookup"
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_search",
+      "content": "search"
+    }
+  ],
+  "expectedWarningCodes": ["dropped-metadata"]
+}

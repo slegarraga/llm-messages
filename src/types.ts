@@ -11,18 +11,22 @@
 /** A supported provider. */
 export type Provider = 'openai' | 'anthropic' | 'gemini';
 
+/** Frozen, stable, machine readable codes describing non fatal conversion events. */
+export const warningCodes = Object.freeze([
+  'generated-id',
+  'unmapped-tool-result',
+  'merged-role',
+  'dropped-content',
+  'dropped-metadata',
+  'invalid-json-arguments',
+  'system-midstream',
+  'gemini-url-image',
+  'gemini-url-media',
+  'unsupported-modality',
+] as const);
+
 /** A stable, machine readable code describing a non fatal conversion event. */
-export type WarningCode =
-  | 'generated-id'
-  | 'unmapped-tool-result'
-  | 'merged-role'
-  | 'dropped-content'
-  | 'dropped-metadata'
-  | 'invalid-json-arguments'
-  | 'system-midstream'
-  | 'gemini-url-image'
-  | 'gemini-url-media'
-  | 'unsupported-modality';
+export type WarningCode = (typeof warningCodes)[number];
 
 /** A non fatal event raised during conversion. */
 export interface Warning {

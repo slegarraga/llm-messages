@@ -1,0 +1,46 @@
+{
+  "name": "gemini-response-unsupported-content-part",
+  "description": "Gemini response-level unsupported content parts are dropped with explicit warnings while supported text remains.",
+  "source": "gemini-response",
+  "input": {
+    "candidates": [
+      {
+        "content": {
+          "parts": [
+            {
+              "text": "Hello "
+            },
+            {
+              "inlineData": {
+                "mimeType": "image/png",
+                "data": "aGVsbG8="
+              }
+            },
+            {
+              "text": "world"
+            }
+          ]
+        },
+        "finishReason": "STOP"
+      }
+    ],
+    "usageMetadata": {
+      "promptTokenCount": 2,
+      "candidatesTokenCount": 3
+    }
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": "Hello world"
+    }
+  ],
+  "expectedResponse": {
+    "finishReason": "stop",
+    "usage": {
+      "inputTokens": 2,
+      "outputTokens": 3
+    }
+  },
+  "expectedWarningCodes": ["dropped-content"]
+}

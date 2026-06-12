@@ -1,0 +1,59 @@
+{
+  "name": "anthropic-response-tool-use-id-reservation",
+  "description": "Anthropic response-level id-less tool_use blocks skip generated ids reserved by later provider-supplied ids.",
+  "source": "anthropic-response",
+  "input": {
+    "type": "message",
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "name": "search",
+        "input": {
+          "q": "generated"
+        }
+      },
+      {
+        "type": "tool_use",
+        "id": "call_search_0",
+        "name": "search",
+        "input": {
+          "q": "provided"
+        }
+      }
+    ],
+    "stop_reason": "tool_use"
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "call_search_1",
+          "type": "function",
+          "function": {
+            "name": "search",
+            "arguments": "{\"q\":\"generated\"}"
+          }
+        },
+        {
+          "id": "call_search_0",
+          "type": "function",
+          "function": {
+            "name": "search",
+            "arguments": "{\"q\":\"provided\"}"
+          }
+        }
+      ]
+    }
+  ],
+  "expectedResponse": {
+    "finishReason": "tool_calls",
+    "usage": {
+      "inputTokens": 0,
+      "outputTokens": 0
+    }
+  },
+  "expectedWarningCodes": ["generated-id"]
+}

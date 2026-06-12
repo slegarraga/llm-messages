@@ -1,0 +1,40 @@
+{
+  "name": "gemini-function-call-malformed-name",
+  "description": "Gemini functionCall blocks with malformed names use the stable fallback function name and warning.",
+  "source": "gemini",
+  "input": {
+    "contents": [
+      {
+        "role": "model",
+        "parts": [
+          {
+            "functionCall": {
+              "id": "call_bad_name",
+              "name": "lookup.order",
+              "args": {
+                "id": "ord_123"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "call_bad_name",
+          "type": "function",
+          "function": {
+            "name": "unknown_function",
+            "arguments": "{\"id\":\"ord_123\"}"
+          }
+        }
+      ]
+    }
+  ],
+  "expectedWarningCodes": ["dropped-metadata"]
+}

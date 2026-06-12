@@ -1,0 +1,47 @@
+{
+  "name": "openai-responses-unsupported-content-part",
+  "description": "OpenAI Responses API unsupported message content parts are dropped with explicit warnings while supported text remains.",
+  "source": "openai-responses",
+  "input": {
+    "object": "response",
+    "status": "completed",
+    "output": [
+      {
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "output_text",
+            "text": "Hello "
+          },
+          {
+            "type": "image_generation_call",
+            "result": "provider-only image output"
+          },
+          {
+            "type": "output_text",
+            "text": "world"
+          }
+        ]
+      }
+    ],
+    "usage": {
+      "input_tokens": 2,
+      "output_tokens": 3
+    }
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": "Hello world"
+    }
+  ],
+  "expectedResponse": {
+    "finishReason": "stop",
+    "usage": {
+      "inputTokens": 2,
+      "outputTokens": 3
+    }
+  },
+  "expectedWarningCodes": ["dropped-content"]
+}

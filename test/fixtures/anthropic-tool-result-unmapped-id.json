@@ -1,0 +1,52 @@
+{
+  "name": "anthropic-tool-result-unmapped-id",
+  "description": "Anthropic tool_result ids that do not match prior tool_use blocks stay orphaned and warn.",
+  "source": "anthropic",
+  "input": {
+    "messages": [
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "call_lookup",
+            "name": "lookup",
+            "input": {}
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "tool_result",
+            "tool_use_id": "external_call",
+            "content": "external"
+          }
+        ]
+      }
+    ]
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "call_lookup",
+          "type": "function",
+          "function": {
+            "name": "lookup",
+            "arguments": "{}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "external_call",
+      "content": "external"
+    }
+  ],
+  "expectedWarningCodes": ["unmapped-tool-result"]
+}

@@ -1,0 +1,54 @@
+{
+  "name": "anthropic-tool-use-generated-id",
+  "description": "Anthropic tool_use blocks without usable ids generate deterministic canonical tool call ids and warnings.",
+  "source": "anthropic",
+  "input": {
+    "messages": [
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "tool_use",
+            "name": "lookup",
+            "input": {
+              "q": "one"
+            }
+          },
+          {
+            "type": "tool_use",
+            "id": "",
+            "name": "lookup",
+            "input": {
+              "q": "two"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "call_lookup_0",
+          "type": "function",
+          "function": {
+            "name": "lookup",
+            "arguments": "{\"q\":\"one\"}"
+          }
+        },
+        {
+          "id": "call_lookup_1",
+          "type": "function",
+          "function": {
+            "name": "lookup",
+            "arguments": "{\"q\":\"two\"}"
+          }
+        }
+      ]
+    }
+  ],
+  "expectedWarningCodes": ["generated-id", "generated-id"]
+}

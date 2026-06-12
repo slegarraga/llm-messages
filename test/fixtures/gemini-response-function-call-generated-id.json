@@ -1,0 +1,53 @@
+{
+  "name": "gemini-response-function-call-generated-id",
+  "description": "Gemini response-level functionCall blocks without usable ids generate deterministic canonical tool call ids and warnings.",
+  "source": "gemini-response",
+  "input": {
+    "candidates": [
+      {
+        "content": {
+          "role": "model",
+          "parts": [
+            {
+              "functionCall": {
+                "name": "lookup_order",
+                "args": {
+                  "id": "ord_123"
+                }
+              }
+            }
+          ]
+        },
+        "finishReason": "STOP"
+      }
+    ],
+    "usageMetadata": {
+      "promptTokenCount": 11,
+      "candidatesTokenCount": 7
+    }
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "call_lookup_order_0",
+          "type": "function",
+          "function": {
+            "name": "lookup_order",
+            "arguments": "{\"id\":\"ord_123\"}"
+          }
+        }
+      ]
+    }
+  ],
+  "expectedResponse": {
+    "finishReason": "tool_calls",
+    "usage": {
+      "inputTokens": 11,
+      "outputTokens": 7
+    }
+  },
+  "expectedWarningCodes": ["generated-id"]
+}

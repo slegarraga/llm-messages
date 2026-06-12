@@ -1,0 +1,51 @@
+{
+  "name": "anthropic-tool-use-duplicate-provider-id",
+  "description": "Anthropic tool_use blocks with duplicate provider ids keep the first id and regenerate later duplicates.",
+  "source": "anthropic",
+  "input": {
+    "messages": [
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "call_search_0",
+            "name": "search",
+            "input": {}
+          },
+          {
+            "type": "tool_use",
+            "id": "call_search_0",
+            "name": "search",
+            "input": {}
+          }
+        ]
+      }
+    ]
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "call_search_0",
+          "type": "function",
+          "function": {
+            "name": "search",
+            "arguments": "{}"
+          }
+        },
+        {
+          "id": "call_search_1",
+          "type": "function",
+          "function": {
+            "name": "search",
+            "arguments": "{}"
+          }
+        }
+      ]
+    }
+  ],
+  "expectedWarningCodes": ["generated-id"]
+}

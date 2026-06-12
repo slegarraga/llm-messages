@@ -1,0 +1,56 @@
+{
+  "name": "gemini-function-response-omitted-name-id-match",
+  "description": "Gemini functionResponse blocks with a matching id can omit name and still resolve to the pending function call.",
+  "source": "gemini",
+  "input": {
+    "contents": [
+      {
+        "role": "model",
+        "parts": [
+          {
+            "functionCall": {
+              "id": "call_search",
+              "name": "search",
+              "args": {}
+            }
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "parts": [
+          {
+            "functionResponse": {
+              "id": "call_search",
+              "response": {
+                "result": "done"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "call_search",
+          "type": "function",
+          "function": {
+            "name": "search",
+            "arguments": "{}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_search",
+      "content": "done"
+    }
+  ],
+  "expectedWarningCodes": []
+}

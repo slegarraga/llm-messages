@@ -1,0 +1,52 @@
+{
+  "name": "gemini-function-call-generated-id-reservation",
+  "description": "Gemini id-less functionCall blocks skip generated ids that are reserved by later provider-supplied ids.",
+  "source": "gemini",
+  "input": {
+    "contents": [
+      {
+        "role": "model",
+        "parts": [
+          {
+            "functionCall": {
+              "name": "search",
+              "args": {}
+            }
+          },
+          {
+            "functionCall": {
+              "id": "call_search_0",
+              "name": "search",
+              "args": {}
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "call_search_1",
+          "type": "function",
+          "function": {
+            "name": "search",
+            "arguments": "{}"
+          }
+        },
+        {
+          "id": "call_search_0",
+          "type": "function",
+          "function": {
+            "name": "search",
+            "arguments": "{}"
+          }
+        }
+      ]
+    }
+  ],
+  "expectedWarningCodes": ["generated-id"]
+}

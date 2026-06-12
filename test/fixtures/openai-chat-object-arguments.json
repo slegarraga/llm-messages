@@ -1,0 +1,52 @@
+{
+  "name": "openai-chat-object-arguments",
+  "description": "OpenAI Chat Completions tool_call argument objects serialize to canonical JSON strings without warning.",
+  "source": "openai",
+  "input": {
+    "choices": [
+      {
+        "message": {
+          "role": "assistant",
+          "content": "Checking order.",
+          "tool_calls": [
+            {
+              "id": "call_lookup",
+              "type": "function",
+              "function": {
+                "name": "lookup_order",
+                "arguments": {
+                  "id": "ord_123"
+                }
+              }
+            }
+          ]
+        },
+        "finish_reason": "tool_calls"
+      }
+    ]
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": "Checking order.",
+      "tool_calls": [
+        {
+          "id": "call_lookup",
+          "type": "function",
+          "function": {
+            "name": "lookup_order",
+            "arguments": "{\"id\":\"ord_123\"}"
+          }
+        }
+      ]
+    }
+  ],
+  "expectedResponse": {
+    "finishReason": "tool_calls",
+    "usage": {
+      "inputTokens": 0,
+      "outputTokens": 0
+    }
+  },
+  "expectedWarningCodes": []
+}

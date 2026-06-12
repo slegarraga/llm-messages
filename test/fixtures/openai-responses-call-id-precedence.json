@@ -1,0 +1,42 @@
+{
+  "name": "openai-responses-call-id-precedence",
+  "description": "OpenAI Responses API function_call items with both call_id and id preserve call_id as the canonical tool-call id.",
+  "source": "openai-responses",
+  "input": {
+    "object": "response",
+    "status": "completed",
+    "output": [
+      {
+        "type": "function_call",
+        "call_id": "call_lookup_order",
+        "id": "fc_item_123",
+        "name": "lookup_order",
+        "arguments": "{\"id\":\"ord_123\"}"
+      }
+    ]
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "call_lookup_order",
+          "type": "function",
+          "function": {
+            "name": "lookup_order",
+            "arguments": "{\"id\":\"ord_123\"}"
+          }
+        }
+      ]
+    }
+  ],
+  "expectedResponse": {
+    "finishReason": "tool_calls",
+    "usage": {
+      "inputTokens": 0,
+      "outputTokens": 0
+    }
+  },
+  "expectedWarningCodes": []
+}

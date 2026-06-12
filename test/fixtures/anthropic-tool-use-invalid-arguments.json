@@ -1,0 +1,37 @@
+{
+  "name": "anthropic-tool-use-invalid-arguments",
+  "description": "Anthropic tool_use blocks with non-object input fall back to empty canonical arguments and warn.",
+  "source": "anthropic",
+  "input": {
+    "messages": [
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "t1",
+            "name": "get",
+            "input": ["bad"]
+          }
+        ]
+      }
+    ]
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "t1",
+          "type": "function",
+          "function": {
+            "name": "get",
+            "arguments": "{}"
+          }
+        }
+      ]
+    }
+  ],
+  "expectedWarningCodes": ["invalid-json-arguments"]
+}

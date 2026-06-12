@@ -8,10 +8,20 @@ import type {
   OpenAIMessage,
   OpenAIToolMessage,
 } from '../types.js';
-import { Reporter, isRecord, parseArguments, textOf } from '../util.js';
+import {
+  Reporter,
+  createToolCallIdGenerator,
+  isRecord,
+  parseArguments,
+  providerFunctionName,
+  stringifyArgumentsObject,
+  textOf,
+} from '../util.js';
 import { imageFromAnthropic, imageFromOpenAI, imageToAnthropic, imageToOpenAI } from '../image.js';
 import { mediaFromAnthropic, mediaFromOpenAI, mediaToAnthropic, mediaToOpenAI } from '../media.js';
 import { splitSystem } from './openai.js';
+
+const nonEmptyString = (value: unknown): value is string => typeof value === 'string' && value.length > 0;
 
 /* ------------------------------------------------------------------ */
 /* OpenAI (canonical) -> Anthropic                                     */
@@ -91,7 +101,7 @@ function userContent(content: string | OpenAIContentPart[], reporter: Reporter):
     }
     reporter.warn('dropped-content', 'Dropped an unsupported user content part.');
   }
-  return blocks;
+  return blocks.length > 0 ? blocks : '';
 }
 
 function assistantContent(message: OpenAIAssistantMessage, reporter: Reporter): string | AnthropicContentBlock[] {
@@ -136,9 +146,45 @@ function mergeConsecutive(messages: AnthropicMessage[], reporter: Reporter): Ant
   return result;
 }
 
-function asBlocks(content: string | AnthropicContentBlock[]): AnthropicContentBlock[] {
-  if (typeof content !== 'string') return content;
+function asBlocks(content: unknown): AnthropicContentBlock[] {
+  if (Array.isArray(content)) return content.filter(isRecord) as AnthropicContentBlock[];
+  if (typeof content !== 'string') return [];
   return content ? [{ type: 'text', text: content }] : [];
+}
+
+function warnMalformedBlocks(content: unknown, reporter: Reporter): void {
+  if (Array.isArray(content)) {
+    for (const block of content) {
+      if (!isRecord(block)) {
+        reporter.warn('dropped-content', 'Dropped a malformed Anthropic content block.');
+      }
+    }
+    return;
+  }
+  if (typeof content !== 'string') {
+    reporter.warn('dropped-content', 'Dropped malformed Anthropic message content.');
+  }
+}
+
+function isSupportedUserBlock(block: AnthropicContentBlock): boolean {
+  return (
+    (block.type === 'text' && typeof block.text === 'string') ||
+    block.type === 'tool_result' ||
+    imageFromAnthropic(block) !== null ||
+    mediaFromAnthropic(block) !== null
+  );
+}
+
+function isSupportedAssistantBlock(block: AnthropicContentBlock): boolean {
+  return (block.type === 'text' && typeof block.text === 'string') || block.type === 'tool_use';
+}
+
+function warnUnsupportedBlocks(blocks: AnthropicContentBlock[], role: 'user' | 'assistant', reporter: Reporter): void {
+  const isSupported = role === 'user' ? isSupportedUserBlock : isSupportedAssistantBlock;
+  for (const block of blocks) {
+    if (isSupported(block)) continue;
+    reporter.warn('dropped-content', `Dropped unsupported Anthropic ${role} content block '${String(block.type)}'.`);
+  }
 }
 
 /* ------------------------------------------------------------------ */
@@ -154,12 +200,27 @@ function asBlocks(content: string | AnthropicContentBlock[]): AnthropicContentBl
 export function fromAnthropic(conversation: AnthropicConversation, options: ConvertOptions = {}): OpenAIMessage[] {
   const reporter = new Reporter(options);
   const out: OpenAIMessage[] = [];
-  if (conversation.system) {
-    out.push({ role: 'system', content: textOf(conversation.system) });
+  const root: Record<string, unknown> = isRecord(conversation) ? conversation : {};
+  const system = textOf(root.system);
+  if (system) {
+    out.push({ role: 'system', content: system });
   }
+  const messages = Array.isArray(root.messages) ? root.messages : [];
+  const ids = createToolCallIdGenerator(anthropicProviderIds(root));
+  const pendingToolUseIds = new Map<string, string[]>();
 
-  for (const message of conversation.messages) {
+  for (const message of messages) {
+    if (!isRecord(message)) {
+      reporter.warn('dropped-content', 'Dropped a malformed Anthropic message.');
+      continue;
+    }
+    if (message.role !== 'user' && message.role !== 'assistant') {
+      reporter.warn('dropped-content', `Dropped an Anthropic message with unsupported role '${String(message.role)}'.`);
+      continue;
+    }
+    warnMalformedBlocks(message.content, reporter);
     const blocks = asBlocks(message.content);
+    warnUnsupportedBlocks(blocks, message.role, reporter);
 
     if (message.role === 'user') {
       if (blocks.length === 0) {
@@ -182,9 +243,32 @@ export function fromAnthropic(conversation: AnthropicConversation, options: Conv
         }
 
         flushContent();
+        const rawToolUseId = (block as { tool_use_id?: unknown }).tool_use_id;
+        const hasToolUseId = nonEmptyString(rawToolUseId);
+        const matchedToolCallId = hasToolUseId ? takePendingToolUseId(pendingToolUseIds, rawToolUseId) : undefined;
+        const toolCallId =
+          matchedToolCallId ?? (hasToolUseId ? ids.claim(rawToolUseId, 'tool_result') : ids.generate('tool_result'));
+        if (!hasToolUseId) {
+          reporter.warn(
+            'unmapped-tool-result',
+            `Anthropic tool_result had no usable tool_use_id; generated '${toolCallId}'.`,
+          );
+        } else if (!matchedToolCallId) {
+          const unmappedMessage =
+            toolCallId === rawToolUseId
+              ? `Anthropic tool_result '${rawToolUseId}' had no matching tool_use; kept the result id.`
+              : `Anthropic tool_result '${rawToolUseId}' had no matching tool_use; generated '${toolCallId}'.`;
+          reporter.warn('unmapped-tool-result', unmappedMessage);
+          if (toolCallId !== rawToolUseId) {
+            reporter.warn(
+              'generated-id',
+              `Anthropic tool_result '${rawToolUseId}' reused an existing id; generated '${toolCallId}'.`,
+            );
+          }
+        }
         out.push({
           role: 'tool',
-          tool_call_id: String((block as { tool_use_id?: string }).tool_use_id ?? ''),
+          tool_call_id: toolCallId,
           content: textOf((block as { content?: unknown }).content),
           ...(typeof (block as { is_error?: unknown }).is_error === 'boolean'
             ? { is_error: (block as { is_error: boolean }).is_error }
@@ -201,14 +285,61 @@ export function fromAnthropic(conversation: AnthropicConversation, options: Conv
     const assistant: OpenAIAssistantMessage = { role: 'assistant', content: text || null };
     if (toolUses.length > 0) {
       assistant.tool_calls = toolUses.map((block) => {
-        const b = block as { id: string; name: string; input: Record<string, unknown> };
-        return { id: b.id, type: 'function', function: { name: b.name, arguments: JSON.stringify(b.input ?? {}) } };
+        const b = block as { id?: unknown; name?: unknown; input?: unknown };
+        const name = providerFunctionName(b.name, reporter, 'Anthropic', 'tool_use');
+        const providedId = nonEmptyString(b.id) ? b.id : undefined;
+        const id = providedId ? ids.claim(providedId, name) : ids.generate(name);
+        if (!providedId) {
+          reporter.warn('generated-id', `Anthropic tool_use '${name}' had no id; generated '${id}'.`);
+        } else if (id !== providedId) {
+          reporter.warn('generated-id', `Anthropic tool_use '${name}' reused id '${providedId}'; generated '${id}'.`);
+        }
+        if (providedId) pushPendingToolUseId(pendingToolUseIds, providedId, id);
+        return {
+          id,
+          type: 'function',
+          function: {
+            name,
+            arguments: stringifyArgumentsObject(b.input, reporter, 'Anthropic', 'tool_use', name),
+          },
+        };
       });
     }
     out.push(assistant);
   }
 
   return out;
+}
+
+function pushPendingToolUseId(pending: Map<string, string[]>, providerId: string, normalizedId: string): void {
+  const ids = pending.get(providerId);
+  if (ids) ids.push(normalizedId);
+  else pending.set(providerId, [normalizedId]);
+}
+
+function takePendingToolUseId(pending: Map<string, string[]>, providerId: string): string | undefined {
+  const ids = pending.get(providerId);
+  const id = ids?.shift();
+  if (ids?.length === 0) pending.delete(providerId);
+  return id;
+}
+
+function anthropicProviderIds(conversation: unknown): string[] {
+  const ids: string[] = [];
+  const root: Record<string, unknown> = isRecord(conversation) ? conversation : {};
+  const messages = Array.isArray(root.messages) ? root.messages : [];
+  for (const message of messages) {
+    if (!isRecord(message)) continue;
+    for (const block of asBlocks(message.content)) {
+      if (block.type === 'tool_use' && nonEmptyString((block as { id?: unknown }).id)) {
+        ids.push((block as { id: string }).id);
+      }
+      if (block.type === 'tool_result' && nonEmptyString((block as { tool_use_id?: unknown }).tool_use_id)) {
+        ids.push((block as { tool_use_id: string }).tool_use_id);
+      }
+    }
+  }
+  return ids;
 }
 
 /** Rebuilds OpenAI user content from Anthropic blocks, as a string unless media is present. */
@@ -233,5 +364,5 @@ function userContentToOpenAI(blocks: AnthropicContentBlock[], reporter: Reporter
       parts.push({ type: 'text', text: block.text });
     }
   }
-  return parts;
+  return parts.length > 0 ? parts : '';
 }

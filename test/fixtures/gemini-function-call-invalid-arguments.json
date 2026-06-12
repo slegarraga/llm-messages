@@ -1,0 +1,38 @@
+{
+  "name": "gemini-function-call-invalid-arguments",
+  "description": "Gemini functionCall parts with non-object args fall back to empty canonical arguments and warn.",
+  "source": "gemini",
+  "input": {
+    "contents": [
+      {
+        "role": "model",
+        "parts": [
+          {
+            "functionCall": {
+              "id": "call_search",
+              "name": "search",
+              "args": null
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "call_search",
+          "type": "function",
+          "function": {
+            "name": "search",
+            "arguments": "{}"
+          }
+        }
+      ]
+    }
+  ],
+  "expectedWarningCodes": ["invalid-json-arguments"]
+}

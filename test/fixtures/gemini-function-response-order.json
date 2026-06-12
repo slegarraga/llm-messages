@@ -1,0 +1,71 @@
+{
+  "name": "gemini-function-response-order",
+  "description": "Gemini user text around a functionResponse preserves canonical message ordering.",
+  "source": "gemini",
+  "input": {
+    "contents": [
+      {
+        "role": "model",
+        "parts": [
+          {
+            "functionCall": {
+              "id": "call_lookup",
+              "name": "lookup_order",
+              "args": {}
+            }
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "parts": [
+          {
+            "text": "before"
+          },
+          {
+            "functionResponse": {
+              "id": "call_lookup",
+              "name": "lookup_order",
+              "response": {
+                "result": "done"
+              }
+            }
+          },
+          {
+            "text": "after"
+          }
+        ]
+      }
+    ]
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "call_lookup",
+          "type": "function",
+          "function": {
+            "name": "lookup_order",
+            "arguments": "{}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "content": "before"
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_lookup",
+      "content": "done"
+    },
+    {
+      "role": "user",
+      "content": "after"
+    }
+  ],
+  "expectedWarningCodes": []
+}

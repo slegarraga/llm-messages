@@ -1,0 +1,53 @@
+{
+  "name": "anthropic-tool-result-id-reservation",
+  "description": "Anthropic tool_result references reserve provider-supplied ids before earlier id-less tool_use blocks generate canonical ids and warn when no prior tool_use matches.",
+  "source": "anthropic",
+  "input": {
+    "messages": [
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "tool_use",
+            "name": "lookup",
+            "input": {
+              "q": "generated"
+            }
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "tool_result",
+            "tool_use_id": "call_lookup_0",
+            "content": "provided result"
+          }
+        ]
+      }
+    ]
+  },
+  "expectedOpenAI": [
+    {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+        {
+          "id": "call_lookup_1",
+          "type": "function",
+          "function": {
+            "name": "lookup",
+            "arguments": "{\"q\":\"generated\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_lookup_0",
+      "content": "provided result"
+    }
+  ],
+  "expectedWarningCodes": ["generated-id", "unmapped-tool-result"]
+}
