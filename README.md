@@ -6,11 +6,10 @@
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/slegarraga/llm-messages/badge)](https://scorecard.dev/viewer/?uri=github.com/slegarraga/llm-messages)
 [![license](https://img.shields.io/npm/l/llm-messages.svg)](./LICENSE)
 [![zero dependencies](https://img.shields.io/badge/dependencies-0-brightgreen.svg)](./package.json)
+[![install size](https://packagephobia.com/badge?p=llm-messages)](https://packagephobia.com/result?p=llm-messages)
+[![bundle size](https://img.shields.io/bundlephobia/minzip/llm-messages?label=min%2Bgzip)](https://bundlephobia.com/package/llm-messages)
 
-Convert chat conversations between **OpenAI**, **Anthropic** and **Gemini**
-message formats, and normalize provider responses into the same
-OpenAI-compatible assistant shape. Tool calls, system prompts, roles and
-response metadata handled correctly. Zero dependencies.
+One library to write a conversation once and send it to OpenAI, Anthropic, or Gemini: handles system prompts, tool calls, role names, consecutive-turn merging, and response normalization. Zero dependencies.
 
 Switching an agent from one provider to another (or running fallback across providers) means rewriting the whole conversation, and the differences are subtle enough to break at runtime:
 
@@ -56,6 +55,116 @@ const gemini = toGemini(messages);
 // -> { systemInstruction: { parts: [{ text: 'You are a weather assistant.' }] },
 //      contents: [{ role: 'user', parts: [{ text: "What's the weather in Paris?" }] }] }
 ```
+
+## Recipes
+
+### Convert an OpenAI conversation to Anthropic and call the SDK
+
+```ts
+import Anthropic from '@anthropic-ai/sdk';
+import { toAnthropic, responseFromAnthropic, type OpenAIMessage } from 'llm-messages';
+
+const client = new Anthropic();
+
+const conversation: OpenAIMessage[] = [
+  { role: 'system', content: 'You are a helpful assistant.' },
+  { role: 'user', content: 'What is 2 + 2?' },
+];
+
+const { system, messages } = toAnthropic(conversation);
+
+const raw = await client.messages.create({
+  model: 'claude-opus-4-5',
+  max_tokens: 256,
+  system,
+  messages,
+});
+
+// Normalize the response back to the OpenAI-compatible shape:
+const { message, finishReason, usage } = responseFromAnthropic(raw);
+const text = raw.content.find((b) => b.type === 'text')?.text ?? '';
+// message.role === 'assistant', finishReason === 'stop', usage.outputTokens > 0
+```
+
+### Provider-fallback loop: one conversation, two providers
+
+When a provider is rate-limited or unavailable, retry against the next one without
+rewriting the conversation or the response-parsing logic:
+
+```ts
+import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
+import { toAnthropic, responseFromAnthropic, responseFromOpenAI, type OpenAIMessage } from 'llm-messages';
+
+const conversation: OpenAIMessage[] = [
+  { role: 'system', content: 'You are a helpful assistant.' },
+  { role: 'user', content: 'Summarize the water cycle in one sentence.' },
+];
+
+async function callWithFallback() {
+  // Try OpenAI first:
+  try {
+    const oai = new OpenAI();
+    const res = await oai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: conversation,
+    });
+    const raw = res.choices[0].message.content ?? '';
+    return responseFromOpenAI(res);
+  } catch {
+    // Fall back to Anthropic with the same conversation:
+    const ant = new Anthropic();
+    const { system, messages } = toAnthropic(conversation);
+    const res = await ant.messages.create({
+      model: 'claude-haiku-4-5',
+      max_tokens: 256,
+      system,
+      messages,
+    });
+    return responseFromAnthropic(res);
+  }
+}
+
+const { message, finishReason } = await callWithFallback();
+// message.role === 'assistant' regardless of which provider answered
+```
+
+### Vercel AI SDK: keep your conversation portable
+
+```ts
+import { generateText } from 'ai';
+import { openai } from '@ai-sdk/openai';
+import { toAnthropic, type OpenAIMessage } from 'llm-messages';
+
+const conversation: OpenAIMessage[] = [
+  { role: 'system', content: 'You are a helpful assistant.' },
+  { role: 'user', content: 'Hello!' },
+];
+
+// Use directly with Vercel AI SDK (already OpenAI-compatible):
+const { text } = await generateText({ model: openai('gpt-4o-mini'), messages: conversation });
+
+// Or convert the same conversation to send via Anthropic SDK:
+const { system, messages } = toAnthropic(conversation);
+```
+
+## Why not X
+
+**`ai` (Vercel AI SDK)** covers model routing and streaming well, but its
+`CoreMessage` type differs from OpenAI's Chat Completions shape, and it does not
+export converters to/from raw Anthropic or Gemini wire formats. `llm-messages` is
+a complement: convert once so the conversation stays in one shape, then hand it to
+whichever SDK or HTTP client you use.
+
+**Writing the conversion yourself** is straightforward for text, but subtle for
+tool calls: argument serialization differs per provider, consecutive same-role
+turns are rejected by Anthropic and Gemini, Gemini matches results by name when
+ids are absent, and Anthropic `tool_use_id` pairing has its own rules. The edge
+cases accumulate. `llm-messages` has conformance fixtures that cover them.
+
+**LangChain / LlamaIndex** solve orchestration. If you only need the message
+conversion layer without the orchestration overhead, `llm-messages` is ~6 KB
+min+gzip with zero runtime dependencies.
 
 ## API
 
@@ -246,21 +355,18 @@ local validation and production checks.
 Security posture is tracked in [docs/security-posture.md](./docs/security-posture.md),
 including CodeQL, OpenSSF Scorecard, Dependabot and branch rules.
 
-## Provider portability suite
+## Related
 
 `llm-messages` is the conversation boundary in a small provider-portability
-suite for OpenAI-compatible agent infrastructure:
+suite for OpenAI-compatible agent infrastructure. The other packages in the suite:
 
-- [`tool-schema`](https://github.com/slegarraga/tool-schema) converts one JSON
-  Schema into provider-specific tool/function schemas.
-- [`llm-sse`](https://github.com/slegarraga/llm-sse) parses streaming provider
-  responses into unified events.
-- [`llm-errors`](https://github.com/slegarraga/llm-errors) normalizes provider
-  errors, retry hints and fallback decisions.
-- [`json-from-llm`](https://github.com/slegarraga/json-from-llm) extracts JSON
-  before it enters a tool or message pipeline.
-- [`llm-portability-demo`](https://github.com/slegarraga/llm-portability-demo)
-  shows the whole flow offline, with no API key required.
+- [`json-from-llm`](https://www.npmjs.com/package/json-from-llm): extract valid JSON from an LLM response, even inside reasoning tags, fenced blocks or prose
+- [`tool-schema`](https://www.npmjs.com/package/tool-schema): convert a JSON Schema into a provider tool / function-calling schema for OpenAI, Anthropic, Gemini and MCP
+- [`llm-sse`](https://www.npmjs.com/package/llm-sse): parse streaming SSE from LLM providers into typed, provider-agnostic events
+- [`llm-errors`](https://www.npmjs.com/package/llm-errors): normalize provider errors (rate limits, retries, status) into one shape
+
+The [`llm-portability-demo`](https://github.com/slegarraga/llm-portability-demo)
+shows the whole flow offline, with no API key required.
 
 Read the
 [provider portability map](https://github.com/slegarraga/llm-portability-demo/blob/main/docs/provider-portability.md)
