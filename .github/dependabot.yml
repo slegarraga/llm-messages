@@ -16,6 +16,6 @@ updates:
     groups:
       actions:
         patterns:
-          - "*"
+          - '*'
     commit-message:
       prefix: chore
