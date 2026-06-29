@@ -74,7 +74,7 @@ const conversation: OpenAIMessage[] = [
 const { system, messages } = toAnthropic(conversation);
 
 const raw = await client.messages.create({
-  model: 'claude-opus-4-5',
+  model: 'claude-opus-4-8',
   max_tokens: 256,
   system,
   messages,
@@ -116,7 +116,7 @@ async function callWithFallback() {
     const ant = new Anthropic();
     const { system, messages } = toAnthropic(conversation);
     const res = await ant.messages.create({
-      model: 'claude-haiku-4-5',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 256,
       system,
       messages,
