@@ -6,6 +6,12 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.5.3] - 2026-06-29
+
+### Fixed
+
+- The npm package page showed a broken "resource not found" downloads badge after the self-hosted badge JSON was removed. The README now uses shields.io's native `npm/dm` badge, which renders the live download count directly on npm.
+
 ## [0.5.2] - 2026-06-12
 
 ### Summary
