@@ -69,11 +69,7 @@ export interface OpenAIFilePart {
 
 /** A content part. Unknown part types are preserved verbatim. */
 export type OpenAIContentPart =
-  | OpenAITextPart
-  | OpenAIImagePart
-  | OpenAIAudioPart
-  | OpenAIFilePart
-  | { type: string; [key: string]: unknown };
+  OpenAITextPart | OpenAIImagePart | OpenAIAudioPart | OpenAIFilePart | { type: string; [key: string]: unknown };
 
 export interface OpenAIToolCall {
   id: string;

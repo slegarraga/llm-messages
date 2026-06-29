@@ -15,9 +15,7 @@ import { parseDataUrl, toDataUrl } from './image.js';
 export type MediaModality = 'audio' | 'document';
 
 export type MediaSource =
-  | { kind: 'base64'; mediaType: string; data: string }
-  | { kind: 'url'; url: string }
-  | { kind: 'file_id'; id: string };
+  { kind: 'base64'; mediaType: string; data: string } | { kind: 'url'; url: string } | { kind: 'file_id'; id: string };
 
 export interface MediaPart {
   modality: MediaModality;
