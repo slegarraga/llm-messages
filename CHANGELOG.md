@@ -6,6 +6,12 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.5.4] - 2026-06-29
+
+### Changed
+
+- Documentation: add provider-SDK recipes (OpenAI, Anthropic, Vercel AI SDK), a "why not alternatives" section, complete cross-links to the sibling packages, and install / bundle-size badges. No code changes.
+
 ## [0.5.3] - 2026-06-29
 
 ### Fixed
