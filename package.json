@@ -80,9 +80,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepublishOnly": "npm run check",
-    "prepare": "npm run build",
-    "badges:downloads": "node scripts/update-download-badge.mjs",
-    "badges:downloads:check": "node scripts/update-download-badge.mjs --check"
+    "prepare": "npm run build"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
