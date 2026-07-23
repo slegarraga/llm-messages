@@ -1,6 +1,6 @@
 {
   "name": "llm-messages",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "description": "Convert chat conversations and responses between OpenAI, Anthropic and Gemini. Tool calls, images, audio, documents and roles handled. Zero dependencies.",
   "keywords": [
     "openai",
@@ -58,6 +58,10 @@
     "examples",
     "README.md",
     "ROADMAP.md",
+    "GOVERNANCE.md",
+    "SUPPORT.md",
+    "CONTRIBUTING.md",
+    "CODE_OF_CONDUCT.md",
     "SECURITY.md",
     "LICENSE",
     "CHANGELOG.md"
@@ -81,6 +85,9 @@
     "format:check": "prettier --check .",
     "prepublishOnly": "npm run check",
     "prepare": "npm run build"
+  },
+  "overrides": {
+    "esbuild": "0.28.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
