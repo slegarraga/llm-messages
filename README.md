@@ -23,6 +23,17 @@ Switching an agent from one provider to another (or running fallback across prov
 
 `llm-messages` handles all of it. Write the conversation once, send it to any provider.
 
+## Project
+
+- [Roadmap](./ROADMAP.md): conformance and portability priorities
+- [Contributing](./CONTRIBUTING.md): development and fixture workflow
+- [Governance](./GOVERNANCE.md): decisions and the path to reviewer or maintainer
+- [Support](./SUPPORT.md): questions and reproducible bug reports
+- [Security](./SECURITY.md): private vulnerability reporting
+- [Conformance fixtures](./docs/conformance-fixtures.md): public compatibility contract
+- [Changelog](./CHANGELOG.md): release history and migration notes
+- [Code of Conduct](./CODE_OF_CONDUCT.md): community standards
+
 ## Install
 
 ```sh
@@ -277,6 +288,19 @@ for Gemini (which reports `STOP`) and Responses API bodies with `function_call`
 items. OpenAI Chat Completions, OpenAI Responses, Anthropic and Gemini tool
 calls without a non-empty string id get a deterministic one.
 
+### Streaming Responses API output
+
+`llm-messages` normalizes completed response bodies and conversations. For
+incremental SSE events, use
+[`llm-sse`](https://github.com/slegarraga/llm-sse)'s
+`parseOpenAIResponsesStream`, then `collectStream` and `toAssistantMessage`
+before converting the completed history here. Keeping the streaming and message
+boundaries separate lets both packages stay small, deterministic, and
+zero-dependency.
+
+The cross-package conformance example is tracked in
+[issue #29](https://github.com/slegarraga/llm-messages/issues/29).
+
 ### Format cheatsheet
 
 |                  | OpenAI                   | Anthropic                        | Gemini                          |
@@ -354,6 +378,9 @@ local validation and production checks.
 
 Security posture is tracked in [docs/security-posture.md](./docs/security-posture.md),
 including CodeQL, OpenSSF Scorecard, Dependabot and branch rules.
+
+Questions, reproducible bugs, and maintainer responsibilities are documented in
+[SUPPORT.md](./SUPPORT.md) and [GOVERNANCE.md](./GOVERNANCE.md).
 
 ## Related
 

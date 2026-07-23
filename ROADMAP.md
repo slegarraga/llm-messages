@@ -7,13 +7,15 @@ fallback behavior matter.
 
 ## Current priorities
 
-1. **OpenAI Responses API coverage**
+1. **OpenAI Responses API boundary**
 
-   Initial response normalization now maps Responses API `output_text` and
-   `function_call` items back into the current OpenAI Chat Completions-compatible
-   hub shape. Next: expand multimodal and streaming conformance fixtures.
+   Completed response normalization maps Responses API `output_text`,
+   `function_call`, refusal, and supported multimodal items into the current
+   OpenAI Chat Completions-compatible hub shape. Incremental SSE normalization
+   belongs in `llm-sse`. Next: prove the cross-package handoff from a streamed
+   function call into portable Anthropic and Gemini histories.
 
-   Public issue: https://github.com/slegarraga/llm-messages/issues/6
+   Public issue: https://github.com/slegarraga/llm-messages/issues/29
 
 2. **Provider-backed fixture refreshes**
 
@@ -32,6 +34,11 @@ fallback behavior matter.
 
    Document the recommended flow for converting one conversation across
    providers after rate limits or retryable provider failures.
+
+5. **Reviewer and maintainer growth**
+
+   Make fixture ownership, review expectations, and the path to repository
+   responsibility explicit in [GOVERNANCE.md](./GOVERNANCE.md).
 
 ## API credit use
 

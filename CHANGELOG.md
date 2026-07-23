@@ -6,6 +6,20 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.5.5] - 2026-07-23
+
+### Changed
+
+- Documented the boundary between completed Responses API normalization in
+  `llm-messages` and incremental Responses streaming in `llm-sse`.
+- Added public governance, support channels, maintainer responsibilities, and a
+  contributor-to-maintainer path.
+- Replaced the closed Responses coverage roadmap link with a scoped
+  cross-package conformance issue.
+- Included governance and support documentation in the published package.
+- Development tooling overrides `esbuild` to a patched release so a clean
+  install passes `npm audit` while the runtime remains dependency-free.
+
 ## [0.5.4] - 2026-06-29
 
 ### Changed
