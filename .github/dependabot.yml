@@ -7,8 +7,8 @@ updates:
     groups:
       dev-dependencies:
         dependency-type: development
-        exclude:
-          - dependency-name: typescript
+        exclude-patterns:
+          - 'typescript'
     commit-message:
       prefix: chore
   - package-ecosystem: github-actions
