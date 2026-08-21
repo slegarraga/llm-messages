@@ -9,6 +9,10 @@ updates:
         dependency-type: development
         exclude-patterns:
           - 'typescript'
+    ignore:
+      - dependency-name: typescript
+        versions:
+          - '>=7'
     commit-message:
       prefix: chore
   - package-ecosystem: github-actions
